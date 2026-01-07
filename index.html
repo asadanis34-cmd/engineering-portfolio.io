@@ -4,305 +4,303 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Engineering Design & Simulation Company</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Poppins',sans-serif;color:#fff;background:#0b0f1a;}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
 
-  section{
-    min-height:50vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:60px 10%;
-    position:relative;
-    overflow:visible;
-  }
+body{
+  font-family:'Poppins',sans-serif;
+  color:#fff;
+  background:#0b0f1a;
+  overflow-x: hidden;
+}
 
-  /* HERO VIDEO */
-  #hero video{
-    position:absolute;
-    top:50%;
-    left:50%;
-    min-width:100%;
-    min-height:100%;
-    width:auto;
-    height:auto;
-    z-index:0;
-    transform:translate(-50%,-50%);
-    object-fit:cover;
-    filter:brightness(30%);
-  }
-  #hero .overlay{
-    position:absolute;
-    inset:0;
-    background:rgba(0,0,0,0.2);
-    z-index:1;
-  }
-  #hero .hero-text{
-    position:relative;
-    z-index:2;
-    text-align:center;
-  }
+section{
+  min-height:50vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:60px 8%;
+  position:relative;
+}
 
-  h1{font-size:3rem;margin-bottom:20px;}
-  h2{font-size:2.2rem;margin-bottom:20px;}
-  p{font-size:1.05rem;line-height:1.8;margin-bottom:15px;}
+/* HERO */
+#hero{
+  min-height:100vh;
+}
 
-  .btn{
-    display:inline-block;
-    margin-top:20px;
-    padding:12px 30px;
-    background:linear-gradient(135deg,#00d2ff,#3a7bd5);
-    color:#fff;
-    text-decoration:none;
-    border-radius:30px;
-    font-weight:600;
-    transition:transform .3s ease;
-  }
-  .btn:hover{transform:scale(1.05);}
+#hero video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter:brightness(30%);
+  z-index:0;
+}
 
-  /* ABOUT */
-  #about{
-    background:url('https://images.unsplash.com/photo-1581092160562-40aa08e78837?crop=entropy&cs=tinysrgb&fit=max&fm=jpg') center/cover no-repeat;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-  }
-  #about .content{
-    background:rgba(0,0,0,0.8);
-    padding:40px;
-    border-radius:15px;
-    text-align:center;
-    max-width:1000px;
-  }
+#hero .overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.2);
+  z-index:1;
+}
 
-  /* SERVICES SLIDER */
-  #services{
-    background:#080b13;
-    flex-direction:column;
-    padding:60px 5%;
-    border-radius:    20px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:linear-gradient(125deg,#0769f1 rgba(0,0,0,0.2) )
-    
-    
-  }
-  #services h2{
-    text-align:center;
-    margin-bottom:30px;
-  }
-  .services-slider{
-    display:flex;
-    overflow-x:visible     ;
-    gap:10px;
-    padding-bottom:50px;
-    scroll-behavior:smooth;
-  }
-  .services-slider::-webkit-scrollbar{display:none;}
-  .service-card{
-    flex:0 0 auto;
-    width:220px;
-    background:linear-gradient(135deg,#00d2ff,#3a7bd5);
-    padding:20px;
-    border-radius:15px;
-    text-align:center;
-    font-weight:600;
-    cursor:pointer;
-    transition:transform .3s;
-  }
-  .service-card:hover{transform:scale(1.05);}
+#hero .hero-text{
+  position:relative;
+  z-index:2;
+  text-align:center;
+  padding:0 15px;
+}
 
-  /* PROJECTS MODAL */
-  #project-modal{
-    position:fixed;
-    top:0; left:0;
-    width:100%; height:100%;
-    background:rgba(0,0,0,0.95);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
-  }
-  #project-modal img{
-    max-width:90%; max-height:80%;
-    border-radius:10px;
-    box-shadow:0 0 20px #00d2ff;
-  }
-  #project-modal .close{
-    position:absolute;
-    top:20px; right:30px;
-    font-size:2rem;
-    cursor:pointer;
-    color:#fff;
-  }
-  #project-modal .prev, #project-modal .next{
-    position:absolute;
-    top:50%;
-    font-size:3rem;
-    color:#00d2ff;
-    cursor:pointer;
-    user-select:none;
-    transform:translateY(-50%);
-  }
-  #project-modal .prev{left:30px;}
-  #project-modal .next{right:30px;}
-  #project-modal .details{
-    position:absolute;
-    bottom:30px;
-    color:#fff;
-    font-size:1.2rem;
-    text-align:center;
-    width:100%;
-  }
+h1{
+  font-size:3rem;
+  margin-bottom:20px;
+}
 
-  @media(max-width:768px){
-    h1{font-size:2.2rem;}
-    h2{font-size:1.8rem;}
-    section{padding:40px 8%;}
-    .services-slider{gap:15px;}
-    .service-card{width:180px;}
-  }
+h2{
+  font-size:2.2rem;
+  margin-bottom:20px;
+}
+
+p{
+  font-size:1.05rem;
+  line-height:1.8;
+}
+
+.btn{
+  display:inline-block;
+  margin-top:20px;
+  padding:12px 30px;
+  background:linear-gradient(135deg,#00d2ff,#3a7bd5);
+  color:#fff;
+  text-decoration:none;
+  border-radius:30px;
+  font-weight:600;
+  transition:transform .3s ease;
+}
+
+.btn:hover{
+  transform:scale(1.05);
+}
+
+/* ABOUT */
+#about{
+  background:url('https://images.unsplash.com/photo-1581092160562-40aa08e78837') center/cover no-repeat;
+}
+
+#about .content{
+  background:rgba(0,0,0,0.85);
+  padding:40px;
+  border-radius:15px;
+  text-align:center;
+  max-width:1000px;
+}
+
+/* SERVICES */
+#services{
+  background:#080b13;
+  flex-direction:column;
+}
+
+#services h2{
+  margin-bottom:30px;
+}
+
+.services-slider{
+  display:flex;
+  gap:15px;
+  overflow-x:auto;
+  padding-bottom:20px;
+  scroll-snap-type:x mandatory;
+}
+
+.services-slider::-webkit-scrollbar{
+  display:none;
+}
+
+.service-card{
+  flex:0 0 auto;
+  width:220px;
+  padding:20px;
+  border-radius:15px;
+  text-align:center;
+  font-weight:600;
+  background:linear-gradient(135deg,#00d2ff,#3a7bd5);
+  cursor:pointer;
+  transition:transform .3s;
+  scroll-snap-align:center;
+}
+
+.service-card:hover{
+  transform:scale(1.05);
+}
+
+/* MODAL */
+#project-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.95);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+#project-modal img{
+  max-width:90%;
+  max-height:70vh;
+  border-radius:10px;
+}
+
+#project-modal .close{
+  position:absolute;
+  top:20px;
+  right:25px;
+  font-size:2rem;
+  cursor:pointer;
+}
+
+#project-modal .prev,
+#project-modal .next{
+  position:absolute;
+  top:50%;
+  font-size:3rem;
+  cursor:pointer;
+  color:#00d2ff;
+  transform:translateY(-50%);
+}
+
+#project-modal .prev{left:15px;}
+#project-modal .next{right:15px;}
+
+#project-modal .details{
+  position:absolute;
+  bottom:20px;
+  text-align:center;
+  width:100%;
+  font-size:1.1rem;
+}
+
+/* CONTACT */
+#contact .content{
+  text-align:center;
+}
+
+/* MOBILE FIXES */
+@media(max-width:768px){
+  h1{font-size:2.1rem;}
+  h2{font-size:1.7rem;}
+  p{font-size:1rem;}
+  section{padding:50px 6%;}
+  .service-card{width:180px;}
+}
 </style>
 </head>
+
 <body>
 
-  <!-- HERO -->
-  <section id="hero">
-    <video autoplay muted loop playsinline>
-      <source src="assets/video/1.mp4" type="video/mp4">
-    </video>
-    <div class="overlay"></div>
-    <div class="hero-text">
-      <h1>Engineering CFD & Design</h1>
-      <p>Professional CFD simulations and CAD solutions</p>
-      <a href="#contact" class="btn">Work With Us</a>
-    </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section id="about">
-    <div class="content">
-      <h2 style="color:#00d2ff;">About Us</h2>
-      <p>We are an engineering design and simulation company specializing in CFD, 3D mechanical design, and CAD-based solutions.</p>
-      <p>We transform concepts and 2D drawings into accurate, high-quality 3D models and simulations using tools like SolidWorks.</p>
-    </div>
-  </section>
-
-  <!-- SERVICES -->
-  <section id="services">
-    <h2>Our Services</h2>
-    <div class="services-slider">
-      <div class="service-card" data-service="solidworks">⚙️ 3D Mechanical Design</div>
-      <div class="service-card" data-service="autocad">📐 AutoCAD & 2D→3D</div>
-      <div class="service-card" data-service="cfd">🚀 CFD Analysis</div>
-      <div class="service-card" data-service="piping">🧩 Piping & Layouts</div>
-    </div>
-  </section>
-
-  <!-- PROJECT MODAL -->
-  <div id="project-modal">
-    <span class="close">&times;</span>
-    <span class="prev">&#10094;</span>
-    <span class="next">&#10095;</span>
-    <img src="" alt="Project Image">
-    <div class="details"></div>
+<!-- HERO -->
+<section id="hero">
+  <video autoplay muted loop playsinline>
+    <source src="assets/video/1.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+  <div class="hero-text">
+    <h1>Engineering CFD & Design</h1>
+    <p>Professional CFD simulations and CAD solutions</p>
+    <a href="#contact" class="btn">Work With Us</a>
   </div>
+</section>
 
-  <!-- CONTACT -->
-  <section id="contact">
-    <div class="content">
-      <h2>Let’s Build Something Powerful</h2>
-      <a href="mailto:your@email.com" class="btn">Contact Us</a>
-    </div>
-  </section>
+<!-- ABOUT -->
+<section id="about">
+  <div class="content">
+    <h2 style="color:#00d2ff;">About Us</h2>
+    <p>We are an engineering design and simulation company specializing in CFD and 3D mechanical design.</p>
+    <p>We convert concepts and 2D drawings into accurate, production-ready 3D models and simulations using SolidWorks and CFD tools.</p>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <h2>Our Services</h2>
+  <div class="services-slider">
+    <div class="service-card" data-service="solidworks">⚙️ 3D Mechanical Design</div>
+    <div class="service-card" data-service="autocad">📐 AutoCAD & 2D → 3D</div>
+    <div class="service-card" data-service="cfd">🚀 CFD Analysis</div>
+  </div>
+</section>
+
+<!-- MODAL -->
+<div id="project-modal">
+  <span class="close">&times;</span>
+  <span class="prev">&#10094;</span>
+  <span class="next">&#10095;</span>
+  <img src="" alt="">
+  <div class="details"></div>
+</div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="content">
+    <h2>Let’s Build Something Powerful</h2>
+    <p>Email us directly:</p>
+    <a href="mailto:designncfd@gmail.com" class="btn">designncfd@gmail.com</a>
+  </div>
+</section>
 
 <script>
 const services = {
   solidworks:[
     {img:'assets/solidworks/1.jpg', details:'Mechanical Part Design'},
     {img:'assets/solidworks/2.jpg', details:'Assembly Simulation'},
-    {img:'assets/solidworks/3.jpg', details:'Aswwwwly Simulation'},
-    {img:'assets/solidworks/4.jpg', details:'Assewwwy Simulation'}
+    {img:'assets/solidworks/3.jpg', details:'Assembly Simulation'},
+    {img:'assets/solidworks/4.jpg', details:'Assembly Simulation'}
   ],
-  autocad:[
-    {img:'assets/autocad/1.jpg', details:'Civil Layout'},
-    {img:'assets/autocad/2.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/3.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/4.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/5.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/6.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/7.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/8.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/9.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/10.jpg',details:'Floor Plan'},
-    {img:'assets/autocad/11.jpg',     details:'Floor Plan'}
-  ],
-  cfd:[
-    {img:'assets/cfd/1.jpeg ', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/2.jpeg ', details:'Thermal Simulation'},
-    {img:'assets/cfd/3.jpg', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/4.jpg', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/5.jpeg ', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/6.jpg', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/7.jpg', details:'Aerodynamic Flow'}
-
-  ],
-  piping:[
-    {img:'assets/piping/1.jpg', details:'Industrial Piping'},
-    {img:'assets/piping/2.jpg', details:'Layout & Routing'}
-  ]
+  autocad:[ {img:'assets/autocad/1.jpg', details:'Civil Layout'}, {img:'assets/autocad/2.jpg', details:'Floor Plan'}, {img:'assets/autocad/3.jpg', details:'Floor Plan'}, {img:'assets/autocad/4.jpg', details:'Floor Plan'}, {img:'assets/autocad/5.jpg', details:'Floor Plan'}, {img:'assets/autocad/6.jpg', details:'Floor Plan'}, {img:'assets/autocad/7.jpg', details:'Floor Plan'}, {img:'assets/autocad/8.jpg', details:'Floor Plan'}, {img:'assets/autocad/9.jpg', details:'Floor Plan'}, {img:'assets/autocad/10.jpg',details:'Floor Plan'}, {img:'assets/autocad/11.jpg', details:'Floor Plan'} ],
+  cfd:[ {img:'assets/cfd/1.jpeg ', details:'Aerodynamic Flow'}, {img:'assets/cfd/2.jpeg ', details:'Thermal Simulation'}, {img:'assets/cfd/3.jpg', details:'Aerodynamic Flow'}, {img:'assets/cfd/4.jpg', details:'Aerodynamic Flow'}, {img:'assets/cfd/5.jpeg ', details:'Aerodynamic Flow'}, {img:'assets/cfd/6.jpg', details:'Aerodynamic Flow'}, {img:'assets/cfd/7.jpg', details:'Aerodynamic Flow'} ],
 };
 
 const modal = document.getElementById('project-modal');
 const modalImg = modal.querySelector('img');
 const modalDetails = modal.querySelector('.details');
-const closeBtn = modal.querySelector('.close');
-const prevBtn = modal.querySelector('.prev');
-const nextBtn = modal.querySelector('.next');
 
 let currentService = [];
 let currentIndex = 0;
 
-// Open modal when service card clicked
 document.querySelectorAll('.service-card').forEach(card=>{
   card.addEventListener('click', ()=>{
-    const service = card.dataset.service;
-    currentService = services[service];
+    currentService = services[card.dataset.service];
     currentIndex = 0;
-    showModal();
+    modal.style.display='flex';
+    updateModal();
   });
 });
-
-function showModal(){
-  modal.style.display = 'flex';
-  updateModal();
-}
 
 function updateModal(){
   modalImg.src = currentService[currentIndex].img;
   modalDetails.textContent = currentService[currentIndex].details;
 }
 
-// Navigation
-prevBtn.addEventListener('click', ()=>{
-  currentIndex = (currentIndex - 1 + currentService.length) % currentService.length;
+modal.querySelector('.prev').onclick=()=>{
+  currentIndex = (currentIndex-1+currentService.length)%currentService.length;
   updateModal();
-});
-nextBtn.addEventListener('click', ()=>{
-  currentIndex = (currentIndex + 1) % currentService.length;
+};
+modal.querySelector('.next').onclick=()=>{
+  currentIndex = (currentIndex+1)%currentService.length;
   updateModal();
-});
-
-// Close
-closeBtn.addEventListener('click', ()=> modal.style.display='none');
-
-// Click outside to close
-modal.addEventListener('click', e=>{
-  if(e.target===modal) modal.style.display='none';
-});
+};
+modal.querySelector('.close').onclick=()=>modal.style.display='none';
+modal.onclick=e=>{if(e.target===modal)modal.style.display='none';};
 </script>
+
 </body>
 </html>
+
