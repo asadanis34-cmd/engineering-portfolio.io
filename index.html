@@ -1,312 +1,426 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Engineering Design & Simulation Company</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering CFD & Design</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
+*{margin:0;padding:0;box-sizing:border-box}
 body{
   font-family:'Poppins',sans-serif;
-  color:#fff;
   background:#0b0f1a;
-  overflow-x:hidden; /* prevent horizontal scroll */
+  color:#fff;
+  overflow-x:hidden;
+  scroll-behavior:smooth;
 }
 
-section{
-  min-height:50vh;
+/* ---------- NAVBAR ---------- */
+#navbar{
+  width:100%;
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:1000;
   display:flex;
+  justify-content:space-between;
   align-items:center;
-  justify-content:center;
-  padding:60px 10%;
+  padding:15px 50px;
+  background:linear-gradient(90deg,#0d1321,#0b0f1a);
+  box-shadow:0 5px 15px rgba(0,0,0,0.5);
+  border-bottom: 1px solid #00d2ff50;
+  backdrop-filter: blur(8px);
+}
+#navbar .logo{
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  overflow:hidden;
+  box-shadow:0 0 15px #00d2ff60;
+  border:2px solid #00d2ff;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+#navbar .logo img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+#navbar .logo:hover{
+  transform:scale(1.1);
+  box-shadow:0 0 25px #00d2ff;
+}
+#navbar nav ul{
+  display:flex;
+  gap:30px;
+  list-style:none;
+}
+#navbar nav ul li a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:500;
   position:relative;
-  overflow:visible;
+  transition:0.3s;
+}
+#navbar nav ul li a::after{
+  content:'';
+  position:absolute;
+  left:0;
+  bottom:-5px;
+  width:0%;
+  height:2px;
+  background:#00d2ff;
+  transition:0.3s;
+}
+#navbar nav ul li a:hover::after{
+  width:100%;
+}
+#navbar nav ul li a:hover{
+  color:#00d2ff;
 }
 
-/* HERO VIDEO */
+/* Hamburger */
+.hamburger{
+  display:none;
+  flex-direction:column;
+  cursor:pointer;
+  gap:5px;
+  z-index:1100;
+}
+.hamburger div{
+  width:28px;
+  height:3px;
+  background:#fff;
+  border-radius:3px;
+  transition: all 0.3s ease;
+}
+
+/* Hamburger animation when active */
+.hamburger.active div:nth-child(1){
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.hamburger.active div:nth-child(2){
+  opacity:0;
+}
+.hamburger.active div:nth-child(3){
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* ---------- SECTIONS ---------- */
+section{
+  padding:70px 10%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+}
+
+/* ---------- HERO ---------- */
+#hero{
+  position:relative;
+  min-height:100vh;
+  text-align:center;
+  padding-top:80px;
+}
 #hero video{
   position:absolute;
-  top:50%;
-  left:50%;
-  min-width:100%;
-  min-height:100%;
-  width:auto;
-  height:auto;
-  z-index:0;
-  transform:translate(-50%,-50%);
+  inset:0;
+  width:100%;
+  height:100%;
   object-fit:cover;
   filter:brightness(30%);
 }
-#hero .overlay{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,0.2);
-  z-index:1;
-}
-#hero .hero-text{
+#hero .content{
   position:relative;
   z-index:2;
-  text-align:center;
 }
+h1{font-size:3rem;margin-bottom:15px}
+h2{font-size:2.2rem;margin-bottom:20px}
+p{line-height:1.7;color:#cfd3ff}
 
-h1{font-size:3rem;margin-bottom:20px;}
-h2{font-size:2.2rem;margin-bottom:20px;}
-p{font-size:1.05rem;line-height:1.8;margin-bottom:15px;}
-
+/* ---------- BUTTONS ---------- */
 .btn{
-  display:inline-block;
   margin-top:20px;
   padding:12px 30px;
+  border-radius:30px;
   background:linear-gradient(135deg,#00d2ff,#3a7bd5);
   color:#fff;
   text-decoration:none;
-  border-radius:30px;
   font-weight:600;
-  transition:transform .3s ease;
   cursor:pointer;
+  box-shadow:0 5px 15px rgba(0,210,255,0.4);
+  transition:0.3s;
 }
-.btn:hover{transform:scale(1.05);}
-
-/* Fiverr Button */
-.btn-fiverr{
-  background:#1dbf73 !important;
+.btn:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 25px rgba(0,210,255,0.6);
 }
+.btn-fiverr{background:#1dbf73; box-shadow:0 5px 15px rgba(29,191,115,0.4);}
+.btn-fiverr:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(29,191,115,0.6);}
 
-/* ABOUT */
+/* ---------- ABOUT US ---------- */
 #about{
-  background:url('https://images.unsplash.com/photo-1581092160562-40aa08e78837?crop=entropy&cs=tinysrgb&fit=max&fm=jpg') center/cover no-repeat;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-#about .content{
-  background:rgba(0,0,0,0.8);
-  padding:40px;
-  border-radius:15px;
+  background:#0b0f1a;
   text-align:center;
-  max-width:1000px;
+}
+.about-text{
+  max-width:800px;
+  font-size:1.05rem;
+  color:#cfd3ff;
 }
 
-/* SERVICES SLIDER */
-#services{
-  background:#080b13;
-  flex-direction:column;
-  padding:60px 5%;
-  border-radius:20px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  position:relative;
-}
-#services h2{text-align:center;margin-bottom:30px;}
-.services-slider-container{
-  position:relative;
+/* ---------- SERVICES ---------- */
+#services{background:#080b13}
+.services-wrapper{
   width:100%;
   display:flex;
-  align-items:center;
+  justify-content:center;
+  position:relative;
 }
-.services-slider-container {
-  position: relative;
-  width: 100%;
-  display: flex;
-  justify-content: center; /* centers the slider */
+.services-slider{
+  display:inline-flex;
+  gap:15px;
+  overflow-x:auto;
+  scroll-behavior:smooth;
+  padding:10px 0;
 }
-
-.services-slider {
-  display: inline-flex; /* inline-flex allows centering inside parent */
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 20px;
-  scroll-behavior: smooth;
-}
-
-.services-slider::-webkit-scrollbar{display:none;}
+.services-slider::-webkit-scrollbar{display:none}
 .service-card{
-  flex:0 0 auto;
-  width:220px;
+  min-width:220px;
   background:linear-gradient(135deg,#00d2ff,#3a7bd5);
-  padding:30px 15px;
+  padding:30px;
   border-radius:15px;
   text-align:center;
   font-weight:600;
   cursor:pointer;
-  transition:transform .3s;
+  white-space:nowrap;
+  box-shadow:0 5px 15px rgba(0,210,255,0.3);
+  transition:0.3s;
 }
-.service-card:hover{transform:scale(1.05);}
-
-/* Slider arrows */
-.slider-arrow{
+.service-card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 10px 25px rgba(0,210,255,0.5);
+}
+/* arrows */
+.arrow{
   position:absolute;
   top:50%;
   transform:translateY(-50%);
   font-size:2rem;
-  background:rgba(0,0,0,0.5);
-  padding:10px;
-  border-radius:50%;
   cursor:pointer;
-  user-select:none;
   color:#00d2ff;
-  z-index:10;
 }
-.slider-arrow.left{left:5px;}
-.slider-arrow.right{right:5px;}
+.arrow.left{left:0}
+.arrow.right{right:0}
 
-/* PROJECT MODAL */
+/* ---------- PROJECT MODAL ---------- */
 #project-modal{
   position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,0.95);
+  inset:0;
+  background:rgba(0,0,0,.95);
   display:none;
   align-items:center;
   justify-content:center;
   z-index:1000;
 }
 #project-modal img{
-  max-width:90%; max-height:80%;
+  max-width:85%;
+  max-height:80%;
   border-radius:10px;
-  box-shadow:0 0 20px #00d2ff;
 }
-#project-modal .close{
+.modal-btn{
   position:absolute;
-  top:20px; right:30px;
-  font-size:2rem;
-  cursor:pointer;
-  color:#fff;
-}
-#project-modal .prev, #project-modal .next{
-  position:absolute;
-  top:50%;
   font-size:3rem;
+  cursor:pointer;
   color:#00d2ff;
-  cursor:pointer;
-  user-select:none;
-  transform:translateY(-50%);
 }
-#project-modal .prev{left:30px;}
-#project-modal .next{right:30px;}
-#project-modal .details{
-  position:absolute;
-  bottom:30px;
-  color:#fff;
-  font-size:1.2rem;
-  text-align:center;
-  width:100%;
-}
+.prev{left:30px}
+.next{right:30px}
+.close{top:20px;right:30px;font-size:2rem}
 
-/* CONTACT FORM MODAL */
-#contact-modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.9);
-  z-index:2000;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-#contact-modal .modal-content{
-  background:#111;
-  padding:30px;
+/* ---------- CONTACT FORM ---------- */
+#contact-box{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  background:#fff;
+  color:#000;
   border-radius:15px;
-  max-width:400px;
-  width:90%;
-  text-align:center;
-  position:relative;
+  overflow:hidden;
+  max-width:1000px;
 }
-#contact-modal .close-contact{
-  color:white;
-  cursor:pointer;
-  font-size:24px;
-  position:absolute;
-  top:10px;
-  right:20px;
+#contact-left{
+  background:linear-gradient(135deg,#0769f1,#00d2ff);
+  color:#fff;
+  padding:40px;
 }
+#contact-right{
+  padding:40px;
+}
+input,textarea{
+  width:100%;
+  padding:12px;
+  margin-bottom:15px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+button{border:none}
 
-/* MOBILE RESPONSIVE */
+/* ---------- FOOTER ---------- */
+footer{
+  background:#000;
+  padding:40px 10%;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:30px;
+}
+footer h3{margin-bottom:10px;color:#00d2ff}
+footer p{font-size:.9rem}
+
+/* ---------- MOBILE ---------- */
+@media(max-width:992px){
+  #navbar nav{
+    position:fixed;
+    top:65px;
+    right:-100%;
+    width:220px;
+    height:100vh;
+    background:#0b0f1a;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:start;
+    padding:20px;
+    transition:0.3s;
+    box-shadow:-5px 0 15px rgba(0,0,0,0.5);
+  }
+  #navbar nav.active{right:0;}
+  #navbar nav ul{flex-direction:column; gap:20px;}
+  .hamburger{display:flex;}
+}
 @media(max-width:768px){
-  h1{font-size:2.2rem;}
-  h2{font-size:1.8rem;}
-  section{padding:40px 8%;}
-  .services-slider{gap:15px;}
-  .service-card{width:180px;}
-  #contact .btn, #contact .btn-fiverr{margin-top:15px;margin-left:0;width:48%; display:inline-block;}
-  .slider-arrow{font-size:1.5rem;}
+  h1{font-size:2.2rem}
+  #contact-box{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
+<!-- NAVBAR -->
+<header id="navbar">
+  <div class="logo">
+    <img src="assets/logo/1.png" alt="Company Logo">
+  </div>
+  <nav>
+    <ul>
+      <li><a href="#hero">Home</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+  <div class="hamburger" onclick="toggleMenu(this)">
+    <div></div>
+    <div></div>
+    <div></div>
+  </div>
+</header>
+
 <!-- HERO -->
 <section id="hero">
-  <video autoplay muted loop playsinline>
+  <video autoplay muted loop>
     <source src="assets/video/1.mp4" type="video/mp4">
   </video>
-  <div class="overlay"></div>
-  <div class="hero-text">
+  <div class="content">
     <h1>Engineering CFD & Design</h1>
-    <p>Professional CFD simulations and CAD solutions</p>
-    <a href="#contact" class="btn">Work With Us</a>
+    <p>Professional CFD & CAD solutions</p>
+    <button class="btn" onclick="document.getElementById('contact').scrollIntoView()">Contact Us</button>
+    <a href="https://www.fiverr.com/s/m5G7bD8" class="btn btn-fiverr" target="_blank">Hire on Fiverr</a>
   </div>
 </section>
 
-<!-- ABOUT -->
+<!-- ABOUT US -->
 <section id="about">
-  <div class="content">
-    <h2 style="color:#00d2ff;">About Us</h2>
-    <p>We are an engineering design and simulation company specializing in CFD, 3D mechanical design, and CAD-based solutions.</p>
-    <p>We transform concepts and 2D drawings into accurate, high-quality 3D models and simulations using tools like SolidWorks.</p>
+  <h2>About Us</h2>
+  <p class="about-text">
+    We are a professional engineering design and simulation company delivering
+    high-quality mechanical design, CFD analysis, and technical solutions.
+    Our team combines strong engineering fundamentals with industry-standard
+    tools to help clients optimize performance, reduce costs, and bring
+    ideas to reality with precision and reliability.
+  </p>
+  
+  <div class="counters">
+    <div class="counter">
+      <h3 data-target="25">0</h3>
+      <p>Projects Completed</p>
+    </div>
+    <div class="counter">
+      <h3 data-target="3">0</h3>
+      <p>Core Engineering Tools</p>
+    </div>
+    <div class="counter">
+      <h3 data-target="100">0</h3>
+      <p>Client Satisfaction %</p>
+    </div>
   </div>
 </section>
 
 <!-- SERVICES -->
 <section id="services">
   <h2>Our Services</h2>
-  <div class="services-slider-container">
-    <span class="slider-arrow left" onclick="slideServices(-1)">&#10094;</span>
+  <div class="services-wrapper">
+    <span class="arrow left" onclick="slide(-1)">❮</span>
     <div class="services-slider">
-      <div class="service-card" data-service="solidworks">⚙️ 3D Mechanical Design</div>
-      <div class="service-card" data-service="autocad">📐 AutoCAD & 2D→3D</div>
-      <div class="service-card" data-service="cfd">🚀 CFD Analysis</div>
+      <div class="service-card" onclick="openProject('solidworks')">⚙️ 3D Mechanical Design</div>
+      <div class="service-card" onclick="openProject('autocad')">📐 AutoCAD & 2D→3D</div>
+      <div class="service-card" onclick="openProject('cfd')">🚀 CFD Analysis</div>
     </div>
-    <span class="slider-arrow right" onclick="slideServices(1)">&#10095;</span>
+    <span class="arrow right" onclick="slide(1)">❯</span>
   </div>
 </section>
 
 <!-- PROJECT MODAL -->
 <div id="project-modal">
-  <span class="close">&times;</span>
-  <span class="prev">&#10094;</span>
-  <span class="next">&#10095;</span>
-  <img src="" alt="Project Image">
-  <div class="details"></div>
+  <span class="modal-btn close" onclick="closeModal()">✕</span>
+  <span class="modal-btn prev" onclick="change(-1)">❮</span>
+  <img id="modal-img">
+  <span class="modal-btn next" onclick="change(1)">❯</span>
 </div>
 
 <!-- CONTACT -->
 <section id="contact">
-  <div class="content">
-    <h2>Let’s Build Something Powerful</h2>
-    <button class="btn" onclick="openContactForm()">Contact Us</button>
-    <a href="https://www.fiverr.com/s/m5G7bD8" target="_blank" class="btn btn-fiverr">Hire on Fiverr</a>
+  <div id="contact-box">
+    <div id="contact-left">
+      <h2>100% Satisfaction Guaranteed</h2>
+      <p>We’ll prepare the proposal, discuss together and start fast.</p>
+    </div>
+    <div id="contact-right">
+      <input placeholder="Name">
+      <input placeholder="Email">
+      <textarea rows="5" placeholder="Message"></textarea>
+      <button class="btn">Submit</button>
+    </div>
   </div>
 </section>
 
-<!-- CONTACT FORM MODAL -->
-<div id="contact-modal">
-  <div class="modal-content">
-    <span class="close-contact" onclick="closeContactForm()">&times;</span>
-    <h2>Contact Us</h2>
-    <input type="text" id="name" placeholder="Your Name" style="width:100%;margin:10px 0;padding:10px;border-radius:8px;border:none;">
-    <input type="email" id="email" placeholder="Your Email" style="width:100%;margin:10px 0;padding:10px;border-radius:8px;border:none;">
-    <textarea id="message" rows="5" placeholder="Your Message" style="width:100%;margin:10px 0;padding:10px;border-radius:8px;border:none;"></textarea>
-    <button style="background:#00d2ff;color:#fff;border:none;padding:12px 20px;border-radius:30px;cursor:pointer;font-weight:600;" onclick="sendEmail()">Send</button>
+<!-- FOOTER -->
+<footer>
+  <div>
+    <h3>Contact</h3>
+    <p>designncfd@gmail.com</p>
   </div>
-</div>
+  <div>
+    <h3>Services</h3>
+    <p>CFD • CAD • Simulation</p>
+  </div>
+  <div>
+    <h3>Location</h3>
+    <p>Remote / Worldwide</p>
+  </div>
+</footer>
 
 <script>
-// Services Images
-const services = {
+const projects={
   solidworks:[
     {img:'assets/solidworks/1.jpg', details:'Mechanical Part Design'},
     {img:'assets/solidworks/2.jpg', details:'Assembly Simulation'},
@@ -336,59 +450,65 @@ const services = {
     {img:'assets/cfd/7.jpg', details:'Aerodynamic Flow'}
 
   ],
-};
+}
+let list=[],index=0
+const modal=document.getElementById('project-modal')
+const img=document.getElementById('modal-img')
 
-// PROJECT MODAL
-const modal = document.getElementById('project-modal');
-const modalImg = modal.querySelector('img');
-const modalDetails = modal.querySelector('.details');
-const closeBtn = modal.querySelector('.close');
-const prevBtn = modal.querySelector('.prev');
-const nextBtn = modal.querySelector('.next');
-
-let currentService = [];
-let currentIndex = 0;
-
-// Open modal when service card clicked
-document.querySelectorAll('.service-card').forEach(card=>{
-  card.addEventListener('click', ()=>{
-    const service = card.dataset.service;
-    currentService = services[service];
-    currentIndex = 0;
-    showModal();
-  });
-});
-
-function showModal(){ modal.style.display = 'flex'; updateModal(); }
-function updateModal(){ modalImg.src = currentService[currentIndex].img; modalDetails.textContent = currentService[currentIndex].details; }
-
-// Navigation
-prevBtn.addEventListener('click', ()=>{ currentIndex = (currentIndex - 1 + currentService.length) % currentService.length; updateModal(); });
-nextBtn.addEventListener('click', ()=>{ currentIndex = (currentIndex + 1) % currentService.length; updateModal(); });
-
-// Close
-closeBtn.addEventListener('click', ()=> modal.style.display='none');
-modal.addEventListener('click', e=>{ if(e.target===modal) modal.style.display='none'; });
-
-// CONTACT FORM
-function openContactForm(){ document.getElementById('contact-modal').style.display='flex'; }
-function closeContactForm(){ document.getElementById('contact-modal').style.display='none'; }
-function sendEmail(){
-  const name=document.getElementById('name').value;
-  const email=document.getElementById('email').value;
-  const msg=document.getElementById('message').value;
-  if(name && email && msg){
-    window.location.href=`mailto:designncfd@gmail.com?subject=Message from ${name}&body=${msg}%0A%0AFrom: ${email}`;
-    closeContactForm();
-  } else { alert("Please fill all fields!"); }
+function openProject(type){
+  list=projects[type]; index=0
+  img.src=list[index]
+  modal.style.display='flex'
+}
+function closeModal(){modal.style.display='none'}
+function change(d){
+  index=(index+d+list.length)%list.length
+  img.src=list[index]
+}
+function slide(d){
+  document.querySelector('.services-slider')
+    .scrollBy({left:d*250,behavior:'smooth'})
 }
 
-// Services slider arrows
-function slideServices(direction){
-  const slider = document.querySelector('.services-slider');
-  slider.scrollBy({left: direction*250, behavior:'smooth'});
+// ---------- COUNTER ANIMATION ----------
+const counters = document.querySelectorAll('.counter h3');
+const aboutSection = document.getElementById('about');
+let counted = false;
+
+function animateCounters() {
+  counters.forEach(counter => {
+    const target = +counter.getAttribute('data-target');
+    let count = 0;
+    const increment = target / 50; 
+    const update = () => {
+      count += increment;
+      if(count < target){
+        counter.innerText = Math.ceil(count);
+        requestAnimationFrame(update);
+      } else {
+        counter.innerText = target;
+      }
+    };
+    update();
+  });
+}
+
+window.addEventListener('scroll', () => {
+  const sectionTop = aboutSection.getBoundingClientRect().top;
+  const screenHeight = window.innerHeight;
+  if(!counted && sectionTop < screenHeight - 100){
+    animateCounters();
+    counted = true;
+  }
+});
+
+// ---------- HAMBURGER MENU ----------
+function toggleMenu(el){
+  el.classList.toggle('active');
+  document.querySelector('#navbar nav').classList.toggle('active');
 }
 </script>
 
 </body>
 </html>
+
