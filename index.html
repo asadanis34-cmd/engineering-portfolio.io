@@ -451,25 +451,23 @@ const projects = {
   ]
 };
 
-let list=[],index=0
-const modal=document.getElementById('project-modal')
-const img=document.getElementById('modal-img')
+let list=[],index=0;
+const modal=document.getElementById('project-modal');
+const img=document.getElementById('modal-img');
 
 function openProject(type){
-  list=projects[type]; index=0
-  img.src=list[index]
-  modal.style.display='flex'
+  list=projects[type]; index=0;
+  img.src=list[index].img;
+  modal.style.display='flex';
 }
 function closeModal(){modal.style.display='none'}
 function change(d){
-  index=(index+d+list.length)%list.length
-  img.src=list[index]
+  index=(index+d+list.length)%list.length;
+  img.src=list[index].img;
 }
 function slide(d){
-  document.querySelector('.services-slider')
-    .scrollBy({left:d*250,behavior:'smooth'})
+  document.querySelector('.services-slider').scrollBy({left:d*250,behavior:'smooth'});
 }
-
 // ---------- COUNTER ANIMATION ----------
 const counters = document.querySelectorAll('.counter h3');
 const aboutSection = document.getElementById('about');
@@ -511,5 +509,6 @@ function toggleMenu(el){
 
 </body>
 </html>
+
 
 
