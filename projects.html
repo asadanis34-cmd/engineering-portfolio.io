@@ -66,7 +66,8 @@
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
       <strong style="color:#dff7ff">Admin - Add / Manage Projects</strong>
       <div class="admin-controls">
-        <button id="migrateBtn" class="btn small ghost">Re-run migration</button>
+        <button id="migrateBtn" class="btn small ghost">Re-run migration & dedupe</button>
+        <button id="exportBtn" class="btn small ghost" title="Export current merged projects as projects.json">Export projects.json</button>
         <button id="hideAddBtn" class="btn small ghost">Disable Add UI</button>
         <button id="removeAddBtn" class="btn small ghost" title="Removes admin controls from the page (persistent in localStorage)">Remove Add UI</button>
         <button id="downloadBtn" class="btn small">Download HTML</button>
@@ -74,7 +75,7 @@
     </div>
 
     <div style="margin-top:8px;color:#bcdfff;font-size:0.95rem">
-      Old projects are automatically migrated and SolidWorks duplicates are automatically deduplicated (CFD left unchanged). Use "Re-run migration" if you want to retry.
+      The page now loads shared projects from projects.json (next to projects.html). Your personal edits are kept in IndexedDB. Use "Export projects.json" to download the merged dataset so you can commit it to your repo and make it visible on other devices.
     </div>
 
     <div class="status" id="migrateStatus" aria-live="polite"></div>
@@ -134,22 +135,20 @@
 
 <script>
 /*
-  This file:
-  - Automatically migrates old localStorage projects into IndexedDB (if present).
-  - Automatically deduplicates SolidWorks projects using a robust signature:
-      normalized title/desc/tools + image hash of the first image (SHA-1) when available.
-    CFD projects are left untouched/untouched by the dedupe.
-  - Keeps a backup of original localStorage at 'custom_projects_v1_backup'.
-  - Provides admin controls (re-run migration, add/edit/delete, wipe).
-  Notes:
-  - Deduplication runs once and sets a localStorage flag to avoid repeating.
-  - If you want to re-run dedupe, click "Re-run migration" in Admin (it will also re-run dedupe).
-  - Change ADMIN_PASSWORD before sharing the file.
+  Shared projects workflow:
+  - The page will fetch "./projects.json" (relative) at load and treat it as the shared built-in dataset.
+  - Personal edits/additions are stored in IndexedDB (so they remain per-user/device).
+  - "Export projects.json" creates a merged JSON (built-in + custom) with images as either URLs or embedded data URLs
+    so you can commit/upload that file to your repo and the same projects will appear on other devices.
+  - This avoids needing server-side writes; to share between devices you commit the exported projects.json to your repo.
+  - Important: projects.json must be accessible next to projects.html (served via HTTP). Use a local server for testing:
+      python -m http.server 8000
+    then open http://localhost:8000/projects.html
 */
 
 const ADMIN_PASSWORD = 'letmein'; // change before publishing
 
-// localStorage keys
+// localStorage keys and DB
 const LOCAL_OLD_KEY = 'custom_projects_v1';
 const LOCAL_BACKUP_KEY = 'custom_projects_v1_backup';
 const LOCAL_MIGRATED_FLAG = 'custom_projects_migrated_v1';
@@ -158,15 +157,15 @@ const ADMIN_AUTH_KEY = 'projects_admin_auth';
 const ADMIN_DISABLED_KEY = 'projects_admin_disabled';
 const ADMIN_REMOVED_KEY = 'projects_admin_removed';
 
-// DB constants
 const DB_NAME = 'projects-db';
 const DB_VERSION = 1;
 const STORE_IMAGES = 'images';
 const STORE_PROJECTS = 'projects';
 
-// UI nodes
+// UI references
 const migrateStatus = document.getElementById('migrateStatus');
 const migrateBtn = document.getElementById('migrateBtn');
+const exportBtn = document.getElementById('exportBtn');
 const adminToggle = document.getElementById('adminToggle');
 const adminPanel = document.getElementById('adminPanel');
 const addProjBtn = document.getElementById('addProjBtn');
@@ -197,6 +196,25 @@ let isEditing = false;
 let editingMeta = null;
 let dbPromise = null;
 const blobUrlCache = new Map();
+
+// built-in dataset loaded from projects.json
+let builtIn = {}; // { category: [ {title, desc, tools, images: [urls], thumbnailIndex } ] }
+
+// ---------- Fetch built-in projects.json ----------
+async function fetchBuiltIn(){
+  try{
+    const r = await fetch('./projects.json', { cache: 'no-store' });
+    if(!r.ok) { console.warn('projects.json not found or not accessible:', r.status); return; }
+    const json = await r.json();
+    // validate object structure (category -> array)
+    if(typeof json === 'object' && json !== null){
+      builtIn = json;
+      console.log('Loaded built-in projects from projects.json');
+    }
+  }catch(e){
+    console.warn('Failed to load projects.json', e);
+  }
+}
 
 // ---------- IndexedDB helpers ----------
 function openDB(){
@@ -311,7 +329,7 @@ async function compressDataUrl(dataUrl, maxWidth = 1200, quality = 0.8){
   const img = await createImageElementFromDataUrl(dataUrl);
   const ratio = img.width / img.height || 1;
   let newWidth = img.width;
-  if(img.width > maxWidth){ newWidth = maxWidth; }
+  if(img.width > maxWidth) newWidth = maxWidth;
   const newHeight = Math.round(newWidth / ratio);
   const canvas = document.createElement('canvas');
   canvas.width = newWidth;
@@ -322,24 +340,18 @@ async function compressDataUrl(dataUrl, maxWidth = 1200, quality = 0.8){
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   return canvas.toDataURL('image/jpeg', quality);
 }
-function blobToArrayBuffer(blob){
-  return new Promise((resolve,reject)=>{
-    const fr = new FileReader();
-    fr.onload = ()=> resolve(fr.result);
-    fr.onerror = ()=> reject(fr.error);
-    fr.readAsArrayBuffer(blob);
+function blobToDataURL(blob){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = ()=> reject(r.error);
+    r.readAsDataURL(blob);
   });
-}
-async function sha1Hex(arrayBuffer){
-  const hash = await crypto.subtle.digest('SHA-1', arrayBuffer);
-  const bytes = new Uint8Array(hash);
-  return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 function escapeHtml(s){ return String(s || '').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
 
-// ---------- Signatures & dedupe (SolidWorks only) ----------
+// ---------- Signature & dedupe helpers (SolidWorks) ----------
 function normalizeText(s){ return (s||'').toString().trim().replace(/\s+/g,' ').toLowerCase(); }
-
 async function computeRecordFirstImageHash(rec){
   const imgs = rec.images || [];
   if(!imgs.length) return 'noimg';
@@ -349,17 +361,17 @@ async function computeRecordFirstImageHash(rec){
     try{
       const blob = await getImageBlob(first.id);
       if(!blob) return 'blobmissing:' + first.id;
-      const ab = await blobToArrayBuffer(blob);
-      const h = await sha1Hex(ab);
-      return 'blobsha1:' + h;
+      const ab = await blob.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-1', ab);
+      const bytes = new Uint8Array(hashBuffer);
+      return 'blobsha1:' + Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
     }catch(e){
-      console.warn('hash error', first.id, e);
+      console.warn('hash error', e);
       return 'bloberr:' + first.id;
     }
   }
   return 'other';
 }
-
 function signatureFromRecord(rec, firstHash){
   const title = normalizeText(rec.title);
   const desc = normalizeText(rec.desc);
@@ -368,75 +380,15 @@ function signatureFromRecord(rec, firstHash){
   return [title, desc, tools, imgCount, firstHash].join('|');
 }
 
-async function dedupeSolidWorksRecords(){
-  // run only once, controlled by flag
-  if(localStorage.getItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG) === 'true'){
-    migrateStatus.textContent = 'SolidWorks dedupe already performed.';
-    return { deduped: false, reason: 'already-deduped' };
-  }
-
-  migrateStatus.textContent = 'Running SolidWorks deduplication...';
-  const records = await getAllProjectRecords();
-  // filter to SolidWorks category (case-insensitive match)
-  const solid = records.filter(r => {
-    const cat = (r.category || '').toString().toLowerCase();
-    return cat === 'solidworks' || cat.includes('solidwork');
-  });
-
-  if(solid.length <= 1){
-    migrateStatus.textContent = 'SolidWorks dedupe: nothing to do (' + solid.length + ' record(s)).';
-    localStorage.setItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG, 'true'); // mark as done to avoid future runs
-    return { deduped: false, reason: 'none' };
-  }
-
-  // compute signatures with first-image hash
-  const sigMap = new Map(); // signature -> kept record
-  const toDelete = [];
-  for(const rec of solid){
-    const firstHash = await computeRecordFirstImageHash(rec);
-    const sig = signatureFromRecord(rec, firstHash);
-    if(!sigMap.has(sig)){
-      sigMap.set(sig, rec);
-    } else {
-      // If duplicates appear but IDs differ, prefer the existing kept one (first)
-      toDelete.push(rec);
-    }
-  }
-
-  // delete duplicates and their blob images
-  for(const rec of toDelete){
-    for(const im of rec.images || []){
-      if(im && im.kind === 'blob' && im.id){
-        try{ await deleteImage(im.id); }catch(e){ /* ignore */ }
-        if(blobUrlCache.has(im.id)){ URL.revokeObjectURL(blobUrlCache.get(im.id)); blobUrlCache.delete(im.id); }
-      }
-    }
-    try{ await deleteProjectRecord(rec.id); }catch(e){ console.warn('Failed to delete rec', rec.id, e); }
-  }
-
-  localStorage.setItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG, 'true');
-  migrateStatus.textContent = 'SolidWorks dedupe finished. Removed ' + toDelete.length + ' duplicate record(s).';
-  return { deduped: true, removed: toDelete.length };
-}
-
-// ---------- Migration (skip duplicates that already exist) ----------
+// ---------- Migration/dedupe (similar to earlier) ----------
 async function migrateLocalStorageToIndexedDB(options = { maxWidth: 1200, quality: 0.8 }){
   migrateStatus.textContent = 'Checking for old localStorage data...';
   const raw = localStorage.getItem(LOCAL_OLD_KEY);
-  if(!raw){
-    migrateStatus.textContent = '';
-    return { migrated: false, reason: 'no-old-data' };
-  }
-  if(localStorage.getItem(LOCAL_MIGRATED_FLAG) === 'true'){
-    migrateStatus.textContent = 'Already migrated previously.';
-    return { migrated: false, reason: 'already-migrated' };
-  }
-
+  if(!raw){ migrateStatus.textContent = ''; return { migrated: false, reason: 'no-old-data' }; }
+  if(localStorage.getItem(LOCAL_MIGRATED_FLAG) === 'true'){ migrateStatus.textContent = 'Already migrated previously.'; return { migrated:false, reason:'already-migrated' }; }
   let parsed;
   try{ parsed = JSON.parse(raw); }catch(e){ migrateStatus.textContent = 'Failed to parse old data.'; return { migrated:false, reason:'parse-failed' }; }
-
-  migrateStatus.textContent = 'Starting migration (skipping existing duplicates)...';
-
+  migrateStatus.textContent = 'Starting migration (skipping duplicates)...';
   // build existing signatures
   const existingRecords = await getAllProjectRecords();
   const existingSignatures = new Set();
@@ -444,33 +396,23 @@ async function migrateLocalStorageToIndexedDB(options = { maxWidth: 1200, qualit
     const firstHash = await computeRecordFirstImageHash(r);
     existingSignatures.add(signatureFromRecord(r, firstHash));
   }
-
-  // migrate categories/projects from old structure, skipping duplicates
   const categories = Object.keys(parsed);
   for(const cat of categories){
     const projects = parsed[cat] || [];
     for(const proj of projects){
-      // compute a tentative signature from old object (we approximate first-image hash as 'dataurl:first' or url)
       const title = normalizeText(proj.title);
-      const desc  = normalizeText(proj.desc);
+      const desc = normalizeText(proj.desc);
       const tools = normalizeText(proj.tools);
       const imgs = proj.images || [];
       const imgCount = imgs.length || 0;
-      let firstId = 'noimg';
-      if(imgs.length){
-        const f = imgs[0];
-        if(typeof f === 'string' && f.startsWith('data:')) firstId = 'dataurl:first';
-        else if(typeof f === 'string') firstId = 'url:' + f.slice(0,200);
-      }
-      const sigOld = [title, desc, tools, imgCount, firstId].join('|');
-      // If any existing signature matches this approximate signature, skip (avoid duplicates)
-      // Note: for blobs we won't have exact hash here, but this avoids obvious duplicates
+      const firstId = imgs.length ? (typeof imgs[0] === 'string' && imgs[0].startsWith('data:') ? 'dataurl:first' : ('url:' + String(imgs[0]).slice(0,200))) : 'noimg';
+      const approxSig = [title,desc,tools,imgCount,firstId].join('|');
+      // simple skip: if any existing signature starts with title|desc|tools|imgCount| then skip
       let skip = false;
       for(const exist of existingSignatures){
         if(exist.startsWith(title + '|' + desc + '|' + tools + '|' + imgCount + '|')){ skip = true; break; }
       }
       if(skip) continue;
-
       // convert images
       const newImages = [];
       for(const img of imgs){
@@ -488,38 +430,57 @@ async function migrateLocalStorageToIndexedDB(options = { maxWidth: 1200, qualit
           newImages.push({ kind: 'url', url: img });
         }
       }
-
-      const record = {
-        category: cat,
-        title: proj.title || '',
-        desc: proj.desc || '',
-        tools: proj.tools || '',
-        images: newImages,
-        thumbnailIndex: (typeof proj.thumbnailIndex === 'number') ? proj.thumbnailIndex : 0
-      };
-
+      const record = { category: cat, title: proj.title||'', desc: proj.desc||'', tools: proj.tools||'', images: newImages, thumbnailIndex: (typeof proj.thumbnailIndex === 'number') ? proj.thumbnailIndex : 0 };
       await addProjectRecord(record);
       const recFirstHash = await computeRecordFirstImageHash(record);
       existingSignatures.add(signatureFromRecord(record, recFirstHash));
     }
   }
-
   try{
     localStorage.setItem(LOCAL_BACKUP_KEY, raw);
     localStorage.removeItem(LOCAL_OLD_KEY);
     localStorage.setItem(LOCAL_MIGRATED_FLAG, 'true');
-    migrateStatus.textContent = 'Migration complete. Backup saved to ' + LOCAL_BACKUP_KEY;
+    migrateStatus.textContent = 'Migration complete. Backup at ' + LOCAL_BACKUP_KEY;
     return { migrated: true };
   }catch(e){
-    migrateStatus.textContent = 'Migration completed but backup failed: ' + (e.message || e);
+    migrateStatus.textContent = 'Migration finished but backup failed: ' + (e.message||e);
     return { migrated: true, warning: 'backup-failed' };
   }
 }
 
-// ---------- Render projects (from IndexedDB) ----------
+async function dedupeSolidWorksRecords(){
+  if(localStorage.getItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG) === 'true'){ migrateStatus.textContent = 'SolidWorks dedupe already done.'; return { deduped:false,reason:'already' }; }
+  migrateStatus.textContent = 'Running SolidWorks dedupe...';
+  const recs = await getAllProjectRecords();
+  const solid = recs.filter(r => { const c = (r.category||'').toLowerCase(); return c === 'solidworks' || c.includes('solidwork'); });
+  if(solid.length <=1 ){ migrateStatus.textContent = 'SolidWorks dedupe: nothing to do.'; localStorage.setItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG,'true'); return {deduped:false}; }
+  const sigMap = new Map();
+  const toDelete = [];
+  for(const rec of solid){
+    const firstHash = await computeRecordFirstImageHash(rec);
+    const sig = signatureFromRecord(rec, firstHash);
+    if(!sigMap.has(sig)) sigMap.set(sig, rec);
+    else toDelete.push(rec);
+  }
+  for(const rec of toDelete){
+    for(const im of rec.images||[]) if(im && im.kind==='blob' && im.id){ try{ await deleteImage(im.id); }catch(e){} }
+    try{ await deleteProjectRecord(rec.id); }catch(e){ console.warn('del err',e); }
+  }
+  localStorage.setItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG,'true');
+  migrateStatus.textContent = 'SolidWorks dedupe removed '+toDelete.length+' duplicates.';
+  return { deduped:true, removed:toDelete.length };
+}
+
+// ---------- Combined load: builtIn (projects.json) + DB ----------
 async function getAllProjectsStructured(){
+  // builtIn is already an object: category -> [proj,...] where images are strings (urls or dataurls)
   const records = await getAllProjectRecords();
   const byCat = {};
+  // start with builtIn (these are treated as read-only built-in projects)
+  for(const cat of Object.keys(builtIn || {})){
+    byCat[cat] = (builtIn[cat] || []).map(p => ({ ...p, _builtin: true }));
+  }
+  // add DB records (custom projects)
   for(const rec of records){
     const imagesSrcs = [];
     for(const im of rec.images || []){
@@ -533,9 +494,8 @@ async function getAllProjectsStructured(){
             imagesSrcs.push(url);
           } else imagesSrcs.push('');
         }
-      } else if(im.kind === 'url'){
-        imagesSrcs.push(im.url);
-      } else imagesSrcs.push('');
+      } else if(im.kind === 'url') imagesSrcs.push(im.url);
+      else imagesSrcs.push('');
     }
     const proj = { id: rec.id, title: rec.title, desc: rec.desc, tools: rec.tools, images: imagesSrcs, thumbnailIndex: rec.thumbnailIndex, category: rec.category };
     if(!byCat[rec.category]) byCat[rec.category] = [];
@@ -562,7 +522,7 @@ async function render(){
 
   titleEl.innerText = 'Projects';
   if(categories.length === 0){
-    grid.innerHTML = `<div style="color:#9fb3e6">No projects available. Use Admin → Add Project to create new projects.</div>`;
+    grid.innerHTML = `<div style="color:#9fb3e6">No projects available. Use Admin → Add Project to create new projects or add projects.json to the site root.</div>`;
     return;
   }
   for(const category of categories){
@@ -583,7 +543,9 @@ async function render(){
 function createCard(proj, category){
   const div = document.createElement('div');
   div.classList.add('card');
-  if(isAdminAuthenticated()) div.classList.add('admin');
+  // builtin projects are not editable/deletable; custom (from DB) are admin-editable
+  const isBuiltin = !!proj._builtin;
+  if(isAdminAuthenticated() && !isBuiltin) div.classList.add('admin');
 
   const thumbIndex = (typeof proj.thumbnailIndex === 'number') ? proj.thumbnailIndex : 0;
   const imgSrc = (proj.images && proj.images.length && proj.images[thumbIndex]) ? proj.images[thumbIndex] : (proj.images && proj.images.length ? proj.images[0] : '');
@@ -595,36 +557,37 @@ function createCard(proj, category){
   info.className = 'info';
   info.innerHTML = `<h3>${escapeHtml(proj.title || '')}</h3><p>${escapeHtml(proj.desc || '')}</p>`;
 
-  const editBtn = document.createElement('button');
-  editBtn.className = 'edit-btn';
-  editBtn.textContent = 'Edit';
-  editBtn.onclick = (e) => { e.stopPropagation(); if(!isAdminAuthenticated()) return alert('Admin required'); startEditFromRecord(category, proj.id); };
-
-  const del = document.createElement('button');
-  del.className = 'delete-btn';
-  del.textContent = 'Delete';
-  del.onclick = async (e) => {
-    e.stopPropagation();
-    if(!isAdminAuthenticated()) return alert('Admin required');
-    if(!confirm('Delete this project?')) return;
-    const db = await openDB();
-    const rec = await new Promise((res,rej)=>{ const tx=db.transaction(STORE_PROJECTS,'readonly'); const req=tx.objectStore(STORE_PROJECTS).get(proj.id); req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); });
-    if(rec){
-      for(const im of rec.images || []) if(im.kind==='blob' && im.id) try{ await deleteImage(im.id); }catch(e){}
-      await deleteProjectRecord(proj.id);
-      render();
-    } else alert('Project not found.');
-  };
+  if(!isBuiltin){
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-btn';
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = (e) => { e.stopPropagation(); if(!isAdminAuthenticated()) return alert('Admin required'); startEditFromRecord(category, proj.id); };
+    const del = document.createElement('button');
+    del.className = 'delete-btn';
+    del.textContent = 'Delete';
+    del.onclick = async (e) => {
+      e.stopPropagation();
+      if(!isAdminAuthenticated()) return alert('Admin required');
+      if(!confirm('Delete this project?')) return;
+      const db = await openDB();
+      const rec = await new Promise((res,rej)=>{ const tx=db.transaction(STORE_PROJECTS,'readonly'); const req=tx.objectStore(STORE_PROJECTS).get(proj.id); req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); });
+      if(rec){
+        for(const im of rec.images||[]) if(im.kind==='blob' && im.id) try{ await deleteImage(im.id); }catch(e){}
+        await deleteProjectRecord(proj.id);
+        render();
+      } else alert('Project not found.');
+    };
+    div.appendChild(editBtn);
+    div.appendChild(del);
+  }
 
   div.appendChild(img);
   div.appendChild(info);
-  div.appendChild(editBtn);
-  div.appendChild(del);
   div.onclick = ()=> openModalFromCard(proj);
   return div;
 }
 
-// modal helpers
+// ---------- Modal helpers ----------
 let currentImages = [], currentIndex = 0;
 function openModalFromCard(proj){
   const imgs = proj.images || [];
@@ -641,11 +604,10 @@ function nextImage(){ if(!currentImages.length) return; currentIndex=(currentInd
 function prevImage(){ if(!currentImages.length) return; currentIndex=(currentIndex-1+currentImages.length)%currentImages.length; modalImg.src=currentImages[currentIndex]; }
 window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
 
-// ---------- Admin auth & UI ----------
+// ---------- Admin auth/UI ----------
 function isAdminAuthenticated(){ return sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true' && !isAdminRemoved(); }
 function isAdminDisabled(){ return localStorage.getItem(ADMIN_DISABLED_KEY) === 'true'; }
 function isAdminRemoved(){ return localStorage.getItem(ADMIN_REMOVED_KEY) === 'true'; }
-
 adminToggle.addEventListener('click', ()=> {
   if(isAdminRemoved()){ alert('Admin controls removed. To re-enable edit the file or clear the flag in localStorage.'); return; }
   if(isAdminAuthenticated()){
@@ -670,7 +632,7 @@ adminToggle.addEventListener('click', ()=> {
   } else alert('Incorrect password.');
 });
 
-// ---------- File input + thumbnails ----------
+// ---------- File input & thumbs ----------
 projFiles.addEventListener('change', async (e) => {
   const files = Array.from(e.target.files || []);
   if(!files.length) return;
@@ -701,7 +663,6 @@ function renderThumbs(){
   });
   if(combined.length && selectedThumbIndex===null){ selectedThumbIndex=0; const first=thumbs.querySelector('img'); if(first) first.classList.add('selected-thumb'); }
 }
-
 async function readAndCompressImage(file, maxWidth=1200, quality=0.8){
   const dataUrl = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(file); });
   const img = await createImageElementFromDataUrl(dataUrl);
@@ -713,7 +674,7 @@ async function readAndCompressImage(file, maxWidth=1200, quality=0.8){
   return canvas.toDataURL('image/jpeg', quality);
 }
 
-// ---------- Add/Edit flow ----------
+// ---------- Add/Edit/Save (stores into IndexedDB) ----------
 addProjBtn.addEventListener('click', async ()=> {
   if(!isAdminAuthenticated()) return alert('Admin required');
   const category = projCategory.value || 'other';
@@ -772,7 +733,6 @@ async function startEditFromRecord(category, projectId){
 }
 cancelEditBtn.addEventListener('click', ()=>{ if(!isEditing) return; if(!confirm('Cancel edit? Unsaved changes will be lost.')) return; stopEditing(); });
 function stopEditing(){ isEditing=false; editingMeta=null; addProjBtn.textContent='Add Project'; cancelEditBtn.classList.add('hidden'); projTitle.value=projDesc.value=projTools.value=projImages.value=''; selectedFilesData=[]; selectedThumbIndex=null; projFiles.value=''; thumbs.innerHTML=''; }
-function blobToDataURL(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(blob); }); }
 
 // ---------- Clear / Wipe ----------
 clearCustomBtn.addEventListener('click', async ()=> {
@@ -796,56 +756,115 @@ wipeAllBtn.addEventListener('click', async ()=> {
   }catch(e){ console.error(e); alert('Wipe failed'); }
 });
 
-// ---------- Re-run migration button ----------
+// ---------- Re-run migration & dedupe ----------
 migrateBtn.addEventListener('click', async ()=>{
   if(!isAdminAuthenticated()) return alert('Admin required');
-  migrateBtn.disabled = true;
-  migrateStatus.textContent = 'Re-running migration & dedupe...';
+  migrateBtn.disabled = true; migrateStatus.textContent = 'Manual migration & dedupe running...';
   try{
     await migrateLocalStorageToIndexedDB({ maxWidth: 1200, quality: 0.8 });
-    await dedupeSolidWorksRecords(); // extra safety
-    migrateStatus.textContent = 'Re-run done.';
+    await dedupeSolidWorksRecords();
+    migrateStatus.textContent = 'Done.';
     await render();
-  }catch(e){ console.error(e); migrateStatus.textContent = 'Re-run failed: ' + (e.message || e); }
+  }catch(e){ console.error(e); migrateStatus.textContent = 'Failed: ' + (e.message||e); }
   migrateBtn.disabled = false;
 });
 
-// ---------- Init: auto-migrate, dedupe (SolidWorks only), render ----------
+// ---------- Export merged projects.json (for committing to repo) ----------
+exportBtn.addEventListener('click', async ()=>{
+  if(!isAdminAuthenticated()) return alert('Admin required');
+  if(!confirm('Export merged projects.json. This will include built-in projects.json plus your custom projects (images embedded as data URLs when needed). Proceed?')) return;
+  exportBtn.disabled = true;
+  migrateStatus.textContent = 'Preparing export (may take a while for many images)...';
+  try{
+    const merged = await buildMergedProjectsObject(); // {category: [projects]}
+    const blob = new Blob([JSON.stringify(merged, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'projects.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    migrateStatus.textContent = 'Export prepared. Download should start. Commit projects.json to your repo to share across devices.';
+  }catch(e){
+    console.error('Export failed', e);
+    migrateStatus.textContent = 'Export failed: ' + (e.message||e);
+    alert('Export failed: see console.');
+  } finally {
+    exportBtn.disabled = false;
+  }
+});
+
+async function buildMergedProjectsObject(){
+  // builtIn (if any) + DB projects appended per category
+  const out = {};
+  // copy builtIn first (ensure arrays)
+  for(const cat of Object.keys(builtIn || {})){
+    out[cat] = (builtIn[cat] || []).map(p => ({ title: p.title||'', desc: p.desc||'', tools: p.tools||'', images: (p.images||[]), thumbnailIndex: p.thumbnailIndex }));
+  }
+  // add DB projects
+  const recs = await getAllProjectRecords();
+  for(const rec of recs){
+    // convert images: blob images -> data URLs, url images -> keep URL
+    const images = [];
+    for(const im of rec.images || []){
+      if(im.kind === 'url') images.push(im.url);
+      else if(im.kind === 'blob'){
+        const blob = await getImageBlob(im.id);
+        if(blob){
+          const dataUrl = await blobToDataURL(blob);
+          images.push(dataUrl);
+        }
+      }
+    }
+    const proj = { title: rec.title||'', desc: rec.desc||'', tools: rec.tools||'', images, thumbnailIndex: rec.thumbnailIndex };
+    if(!out[rec.category]) out[rec.category] = [];
+    out[rec.category].push(proj);
+  }
+  return out;
+}
+
+// ---------- Init: load builtIn, migrate, dedupe, render ----------
 (async function init(){
+  await fetchBuiltIn(); // loads projects.json from site (if present)
   try{
     const hasOld = localStorage.getItem(LOCAL_OLD_KEY);
     const migratedFlag = localStorage.getItem(LOCAL_MIGRATED_FLAG);
     if(hasOld && migratedFlag !== 'true'){
-      migrateStatus.textContent = 'Old localStorage data found. Automatic migration starting...';
+      migrateStatus.textContent = 'Old localStorage found. Automatic migration starting...';
       try{
         await migrateLocalStorageToIndexedDB({ maxWidth: 1200, quality: 0.8 });
         migrateStatus.textContent = 'Automatic migration completed.';
       }catch(e){
         console.error('auto migration error', e);
-        migrateStatus.textContent = 'Automatic migration failed: ' + (e.message||e);
+        migrateStatus.textContent = 'Auto migration failed: ' + (e.message||e);
       }
     }
-    // Run SolidWorks dedupe automatically once (CFD untouched)
+    // run SolidWorks dedupe automatically, CFD left as-is (per your request)
     if(localStorage.getItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG) !== 'true'){
-      migrateStatus.textContent = 'Performing SolidWorks deduplication (automatic)...';
-      try{
-        await dedupeSolidWorksRecords();
-      }catch(e){
-        console.error('auto dedupe error', e);
-        migrateStatus.textContent = 'SolidWorks dedupe failed: ' + (e.message||e);
-      }
+      migrateStatus.textContent = 'Running SolidWorks dedupe...';
+      try{ await dedupeSolidWorksRecords(); }catch(e){ console.error(e); migrateStatus.textContent = 'Dedupe error: '+(e.message||e); }
     } else {
-      // no visible status needed
       if(!migrateStatus.textContent) migrateStatus.textContent = '';
     }
-  }catch(e){
-    console.error(e);
-  }
+  }catch(e){ console.error(e); }
   await render();
 })();
 
-// expose debug helpers for console
-window.__projectsDebug = { openDB, getAllProjectRecords, migrateLocalStorageToIndexedDB, dedupeSolidWorksRecords };
+
+// expose debug helpers
+window.__projectsDebug = { openDB, getAllProjectRecords, migrateLocalStorageToIndexedDB, dedupeSolidWorksRecords, fetchBuiltIn };
+
+// ---------- Small helpers already used above ----------
+function blobToDataURL(blob){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = ()=> reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
 
 </script>
 
