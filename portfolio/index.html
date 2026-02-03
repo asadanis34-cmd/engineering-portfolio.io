@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Engineering CFD & Design</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -17,290 +15,90 @@ body{
   scroll-behavior:smooth;
 }
 
-/* ---------- NAVBAR ---------- */
+/* NAVBAR */
 #navbar{
-  width:100%;
-  position:fixed;
-  top:0;
-  left:0;
-  z-index:1000;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  width:100%; position:fixed; top:0; left:0; z-index:1000;
+  display:flex; justify-content:space-between; align-items:center;
   padding:15px 50px;
   background:linear-gradient(90deg,#0d1321,#0b0f1a);
   box-shadow:0 5px 15px rgba(0,0,0,0.5);
-  border-bottom: 1px solid #00d2ff50;
-  backdrop-filter: blur(8px);
+  border-bottom:1px solid #00d2ff50;
+  backdrop-filter:blur(8px);
 }
-#navbar .logo{
-  width:60px;
-  height:60px;
-  border-radius:50%;
-  overflow:hidden;
-  box-shadow:0 0 15px #00d2ff60;
-  border:2px solid #00d2ff;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-#navbar .logo img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-#navbar .logo:hover{
-  transform:scale(1.1);
-  box-shadow:0 0 25px #00d2ff;
-}
-#navbar nav ul{
-  display:flex;
-  gap:30px;
-  list-style:none;
-}
-#navbar nav ul li a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:500;
-  position:relative;
-  transition:0.3s;
-}
-#navbar nav ul li a::after{
-  content:'';
-  position:absolute;
-  left:0;
-  bottom:-5px;
-  width:0%;
-  height:2px;
-  background:#00d2ff;
-  transition:0.3s;
-}
-#navbar nav ul li a:hover::after{
-  width:100%;
-}
-#navbar nav ul li a:hover{
-  color:#00d2ff;
-}
+#navbar .logo{width:60px; height:60px; border-radius:50%; overflow:hidden; box-shadow:0 0 15px #00d2ff60; border:2px solid #00d2ff; transition: transform 0.3s, box-shadow 0.3s;}
+#navbar .logo img{width:100%; height:100%; object-fit:cover;}
+#navbar .logo:hover{transform:scale(1.1); box-shadow:0 0 25px #00d2ff;}
+#navbar nav ul{display:flex; gap:30px; list-style:none;}
+#navbar nav ul li a{color:#fff; text-decoration:none; font-weight:500; position:relative; transition:0.3s;}
+#navbar nav ul li a::after{content:''; position:absolute; left:0; bottom:-5px; width:0%; height:2px; background:#00d2ff; transition:0.3s;}
+#navbar nav ul li a:hover::after{width:100%;}
+#navbar nav ul li a:hover{color:#00d2ff;}
 
 /* Hamburger */
-.hamburger{
-  display:none;
-  flex-direction:column;
-  cursor:pointer;
-  gap:5px;
-  z-index:1100;
-}
-.hamburger div{
-  width:28px;
-  height:3px;
-  background:#fff;
-  border-radius:3px;
-  transition: all 0.3s ease;
-}
+.hamburger{display:none; flex-direction:column; cursor:pointer; gap:5px; z-index:1100;}
+.hamburger div{width:28px; height:3px; background:#fff; border-radius:3px; transition: all 0.3s ease;}
+.hamburger.active div:nth-child(1){transform: rotate(45deg) translate(5px,5px);}
+.hamburger.active div:nth-child(2){opacity:0;}
+.hamburger.active div:nth-child(3){transform: rotate(-45deg) translate(6px,-6px);}
 
-/* Hamburger animation when active */
-.hamburger.active div:nth-child(1){
-  transform: rotate(45deg) translate(5px, 5px);
-}
-.hamburger.active div:nth-child(2){
-  opacity:0;
-}
-.hamburger.active div:nth-child(3){
-  transform: rotate(-45deg) translate(6px, -6px);
-}
-
-/* ---------- SECTIONS ---------- */
-section{
-  padding:70px 10%;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-}
-
-/* ---------- HERO ---------- */
-#hero{
-  position:relative;
-  min-height:100vh;
-  text-align:center;
-  padding-top:80px;
-}
-#hero video{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  filter:brightness(30%);
-}
-#hero .content{
-  position:relative;
-  z-index:2;
-}
+/* SECTIONS */
+section{padding:70px 10%; display:flex; justify-content:center; align-items:center; flex-direction:column;}
+#hero{position:relative; min-height:100vh; text-align:center; padding-top:80px;}
+#hero video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(30%);}
+#hero .content{position:relative; z-index:2;}
 h1{font-size:3rem;margin-bottom:15px}
 h2{font-size:2.2rem;margin-bottom:20px}
 p{line-height:1.7;color:#cfd3ff}
 
-/* ---------- BUTTONS ---------- */
-.btn{
-  margin-top:20px;
-  padding:12px 30px;
-  border-radius:30px;
-  background:linear-gradient(135deg,#00d2ff,#3a7bd5);
-  color:#fff;
-  text-decoration:none;
-  font-weight:600;
-  cursor:pointer;
-  box-shadow:0 5px 15px rgba(0,210,255,0.4);
-  transition:0.3s;
-}
-.btn:hover{
-  transform:translateY(-3px);
-  box-shadow:0 10px 25px rgba(0,210,255,0.6);
-}
+/* BUTTONS */
+.btn{margin-top:20px; padding:12px 30px; border-radius:30px;
+  background:linear-gradient(135deg,#00d2ff,#3a7bd5); color:#fff; text-decoration:none; font-weight:600;
+  cursor:pointer; box-shadow:0 5px 15px rgba(0,210,255,0.4); transition:0.3s;}
+.btn:hover{transform:translateY(-3px); box-shadow:0 10px 25px rgba(0,210,255,0.6);}
 .btn-fiverr{background:#1dbf73; box-shadow:0 5px 15px rgba(29,191,115,0.4);}
 .btn-fiverr:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(29,191,115,0.6);}
 
-/* ---------- ABOUT US ---------- */
-#about{
-  background:#0b0f1a;
-  text-align:center;
-}
-.about-text{
-  max-width:800px;
-  font-size:1.05rem;
-  color:#cfd3ff;
-}
+/* ABOUT */
+#about{text-align:center;}
+.about-text{max-width:800px; font-size:1.05rem; color:#cfd3ff;}
+.counters{display:flex; gap:30px; justify-content:center; margin-top:30px;}
+.counter{text-align:center;}
+.counter h3{font-size:2rem; color:#00d2ff;}
 
-/* ---------- SERVICES ---------- */
-#services{background:#080b13}
-.services-wrapper{
-  width:100%;
-  display:flex;
-  justify-content:center;
-  position:relative;
-}
-.services-slider{
-  display:inline-flex;
-  gap:15px;
-  overflow-x:auto;
-  scroll-behavior:smooth;
-  padding:10px 0;
-}
+/* SERVICES */
+#services{background:#080b13;}
+.services-wrapper{width:100%; display:flex; justify-content:center; position:relative;}
+.services-slider{display:inline-flex; gap:15px; overflow-x:auto; scroll-behavior:smooth; padding:10px 0;}
 .services-slider::-webkit-scrollbar{display:none}
-.service-card{
-  min-width:220px;
-  background:linear-gradient(135deg,#00d2ff,#3a7bd5);
-  padding:30px;
-  border-radius:15px;
-  text-align:center;
-  font-weight:600;
-  cursor:pointer;
-  white-space:nowrap;
-  box-shadow:0 5px 15px rgba(0,210,255,0.3);
-  transition:0.3s;
-}
-.service-card:hover{
-  transform:translateY(-5px);
-  box-shadow:0 10px 25px rgba(0,210,255,0.5);
-}
-/* arrows */
-.arrow{
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  font-size:2rem;
-  cursor:pointer;
-  color:#00d2ff;
-}
-.arrow.left{left:0}
-.arrow.right{right:0}
+.service-card{min-width:220px; background:linear-gradient(135deg,#00d2ff,#3a7bd5); padding:30px; border-radius:15px; text-align:center; font-weight:600; cursor:pointer; white-space:nowrap; box-shadow:0 5px 15px rgba(0,210,255,0.3); transition:0.3s;}
+.service-card:hover{transform:translateY(-5px); box-shadow:0 10px 25px rgba(0,210,255,0.5);}
+.arrow{position:absolute; top:50%; transform:translateY(-50%); font-size:2rem; cursor:pointer; color:#00d2ff;}
+.arrow.left{left:0} .arrow.right{right:0;}
+.service-link{text-decoration:none; color:inherit;}
 
-/* ---------- PROJECT MODAL ---------- */
-#project-modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.95);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:1000;
-}
-#project-modal img{
-  max-width:85%;
-  max-height:80%;
-  border-radius:10px;
-}
-.modal-btn{
-  position:absolute;
-  font-size:3rem;
-  cursor:pointer;
-  color:#00d2ff;
-}
-.prev{left:30px}
-.next{right:30px}
-.close{top:20px;right:30px;font-size:2rem}
-
-/* ---------- CONTACT FORM ---------- */
-#contact-box{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  background:#fff;
-  color:#000;
-  border-radius:15px;
-  overflow:hidden;
-  max-width:1000px;
-}
-#contact-left{
-  background:linear-gradient(135deg,#0769f1,#00d2ff);
-  color:#fff;
-  padding:40px;
-}
-#contact-right{
-  padding:40px;
-}
-input,textarea{
-  width:100%;
-  padding:12px;
-  margin-bottom:15px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
+/* CONTACT */
+#contact-box{display:grid; grid-template-columns:1fr 1fr; background:#fff; color:#000; border-radius:15px; overflow:hidden; max-width:1000px;}
+#contact-left{background:linear-gradient(135deg,#0769f1,#00d2ff); color:#fff; padding:40px;}
+#contact-right{padding:40px;}
+input,textarea{width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc;}
 button{border:none}
 
-/* ---------- FOOTER ---------- */
-footer{
-  background:#000;
-  padding:40px 10%;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:30px;
-}
-footer h3{margin-bottom:10px;color:#00d2ff}
-footer p{font-size:.9rem}
+/* FOOTER */
+footer{background:#000; padding:40px 10%; display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:30px;}
+footer h3{margin-bottom:10px;color:#00d2ff} footer p{font-size:.9rem}
 
-/* ---------- MOBILE ---------- */
+/* MOBILE */
 @media(max-width:992px){
   #navbar nav{
-    position:fixed;
-    top:65px;
-    right:-100%;
-    width:220px;
-    height:100vh;
-    background:#0b0f1a;
-    flex-direction:column;
-    justify-content:flex-start;
-    align-items:start;
-    padding:20px;
-    transition:0.3s;
-    box-shadow:-5px 0 15px rgba(0,0,0,0.5);
+    position:fixed; top:65px; right:-100%; width:220px; height:100vh;
+    background:#0b0f1a; flex-direction:column; justify-content:flex-start; align-items:start;
+    padding:20px; transition:0.3s; box-shadow:-5px 0 15px rgba(0,0,0,0.5);
   }
   #navbar nav.active{right:0;}
   #navbar nav ul{flex-direction:column; gap:20px;}
   .hamburger{display:flex;}
 }
-@media(max-width:768px){
-  h1{font-size:2.2rem}
-  #contact-box{grid-template-columns:1fr}
-}
+@media(max-width:768px){h1{font-size:2.2rem} #contact-box{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -319,9 +117,7 @@ footer p{font-size:.9rem}
     </ul>
   </nav>
   <div class="hamburger" onclick="toggleMenu(this)">
-    <div></div>
-    <div></div>
-    <div></div>
+    <div></div><div></div><div></div>
   </div>
 </header>
 
@@ -338,7 +134,7 @@ footer p{font-size:.9rem}
   </div>
 </section>
 
-<!-- ABOUT US -->
+<!-- ABOUT -->
 <section id="about">
   <h2>About Us</h2>
   <p class="about-text">
@@ -371,21 +167,13 @@ footer p{font-size:.9rem}
   <div class="services-wrapper">
     <span class="arrow left" onclick="slide(-1)">❮</span>
     <div class="services-slider">
-      <div class="service-card" onclick="openProject('solidworks')">⚙️ 3D Mechanical Design</div>
-      <div class="service-card" onclick="openProject('autocad')">📐 AutoCAD & 2D→3D</div>
-      <div class="service-card" onclick="openProject('cfd')">🚀 CFD Analysis</div>
+      <a href="projects.html?type=solidworks" class="service-link"><div class="service-card">⚙️ 3D Mechanical Design</div></a>
+      <a href="projects.html?type=autocad" class="service-link"><div class="service-card">📐 AutoCAD & 2D→3D</div></a>
+      <a href="projects.html?type=cfd" class="service-link"><div class="service-card">🚀 CFD Analysis</div></a>
     </div>
     <span class="arrow right" onclick="slide(1)">❯</span>
   </div>
 </section>
-
-<!-- PROJECT MODAL -->
-<div id="project-modal">
-  <span class="modal-btn close" onclick="closeModal()">✕</span>
-  <span class="modal-btn prev" onclick="change(-1)">❮</span>
-  <img id="modal-img">
-  <span class="modal-btn next" onclick="change(1)">❯</span>
-</div>
 
 <!-- CONTACT -->
 <section id="contact">
@@ -420,94 +208,37 @@ footer p{font-size:.9rem}
 </footer>
 
 <script>
-const projects={
-  solidworks:[
-    {img:'assets/solidworks/1.jpg', details:'Mechanical Part Design'},
-    {img:'assets/solidworks/2.jpg', details:'Assembly Simulation'},
-    {img:'assets/solidworks/3.jpg', details:'Aswwwwly Simulation'},
-    {img:'assets/solidworks/4.jpg', details:'Assewwwy Simulation'}
-  ],
-  autocad:[
-    {img:'assets/autocad/1.jpg', details:'Civil Layout'},
-    {img:'assets/autocad/2.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/3.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/4.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/5.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/6.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/7.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/8.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/9.jpg', details:'Floor Plan'},
-    {img:'assets/autocad/10.jpg',details:'Floor Plan'},
-    {img:'assets/autocad/11.jpg',     details:'Floor Plan'}
-  ],
-  cfd:[
-    {img:'assets/cfd/1.jpeg ', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/2.jpeg ', details:'Thermal Simulation'},
-    {img:'assets/cfd/3.jpg', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/4.jpg', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/5.jpeg ', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/6.jpg', details:'Aerodynamic Flow'},
-    {img:'assets/cfd/7.jpg', details:'Aerodynamic Flow'}
-
-  ],
-}
-let list=[],index=0
-const modal=document.getElementById('project-modal')
-const img=document.getElementById('modal-img')
-
-function openProject(type){
-  list=projects[type]; index=0
-  img.src=list[index]
-  modal.style.display='flex'
-}
-function closeModal(){modal.style.display='none'}
-function change(d){
-  index=(index+d+list.length)%list.length
-  img.src=list[index]
-}
-function slide(d){
-  document.querySelector('.services-slider')
-    .scrollBy({left:d*250,behavior:'smooth'})
-}
-
-// ---------- COUNTER ANIMATION ----------
-const counters = document.querySelectorAll('.counter h3');
-const aboutSection = document.getElementById('about');
-let counted = false;
-
-function animateCounters() {
-  counters.forEach(counter => {
-    const target = +counter.getAttribute('data-target');
-    let count = 0;
-    const increment = target / 50; 
-    const update = () => {
-      count += increment;
-      if(count < target){
-        counter.innerText = Math.ceil(count);
-        requestAnimationFrame(update);
-      } else {
-        counter.innerText = target;
-      }
-    };
-    update();
-  });
-}
-
-window.addEventListener('scroll', () => {
-  const sectionTop = aboutSection.getBoundingClientRect().top;
-  const screenHeight = window.innerHeight;
-  if(!counted && sectionTop < screenHeight - 100){
-    animateCounters();
-    counted = true;
-  }
-});
-
-// ---------- HAMBURGER MENU ----------
+// Hamburger
 function toggleMenu(el){
   el.classList.toggle('active');
   document.querySelector('#navbar nav').classList.toggle('active');
 }
+// Slider
+function slide(d){
+  document.querySelector('.services-slider').scrollBy({left:d*250,behavior:'smooth'});
+}
+// Counters
+const counters = document.querySelectorAll('.counter h3');
+const aboutSection = document.getElementById('about');
+let counted = false;
+function animateCounters() {
+  counters.forEach(counter => {
+    const target = +counter.getAttribute('data-target');
+    let count = 0;
+    const increment = target / 50;
+    const update = () => {
+      count += increment;
+      if(count < target){counter.innerText = Math.ceil(count); requestAnimationFrame(update);}
+      else counter.innerText = target;
+    };
+    update();
+  });
+}
+window.addEventListener('scroll',()=>{
+  const sectionTop = aboutSection.getBoundingClientRect().top;
+  const screenHeight = window.innerHeight;
+  if(!counted && sectionTop < screenHeight - 100){animateCounters(); counted=true;}
+});
 </script>
-
 </body>
 </html>
