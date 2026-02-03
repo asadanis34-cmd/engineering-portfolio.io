@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Projects | Engineering CFD &amp; Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--accent:#00d2ff}
+  body{font-family:'Poppins',sans-serif;background:#0b0f1a;color:#fff;margin:0;}
+  header{padding:20px 10%; border-bottom:1px solid rgba(0,210,255,0.25);display:flex;align-items:center;justify-content:space-between;}
+  header h1{font-size:1.9rem;margin:0;}
+  .projects{padding:28px 10% 60px 10%;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:25px;}
+  .card{background:#11162a;border-radius:15px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,0.6);transition:0.3s;cursor:pointer;position:relative;}
+  .card:hover{transform:translateY(-6px);}
+  .card img{width:100%;height:200px;object-fit:cover;background:#081021}
+  .card .info{padding:15px;}
+  .card h3{font-size:1rem;margin-bottom:8px;}
+  .card p{font-size:0.85rem;color:#cfd3ff;margin:0;white-space:pre-wrap;}
+  .back{margin-top:30px;display:inline-block;color:var(--accent);text-decoration:none;}
+  #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);align-items:center;justify-content:center;z-index:1000;flex-direction:column;padding:20px;}
+  #modal img{max-width:90%; max-height:60%; border-radius:10px; margin-bottom:15px;background:#000}
+  .modal-btn{font-size:2rem; cursor:pointer; color:var(--accent); margin:0 20px; user-select:none;}
+  .modal-nav{display:flex;align-items:center;justify-content:center;gap:20px;}
+  .close-modal{position:absolute;top:20px;right:30px;font-size:2rem;cursor:pointer;color:var(--accent);}
+  .details{text-align:center;max-width:700px;margin-top:10px;}
+  .details h2{margin-bottom:10px;}
+  .details p{font-size:0.95rem;color:#cfd3ff;white-space:pre-wrap;}
+  /* Admin UI */
+  .admin-btn{background:transparent;border:1px solid rgba(0,210,255,0.25);color:var(--accent);padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
+  .admin-panel{margin-top:18px;background:#0f1430;border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,0.6);display:none;gap:10px;}
+  .admin-panel.show{display:block;}
+  .admin-panel label{display:block;font-size:0.85rem;margin-top:8px;color:#bcdfff;}
+  .admin-panel input[type="text"], .admin-panel textarea, .admin-panel select, .admin-panel input[type="password"]{width:100%;padding:8px;border-radius:8px;border:1px solid #23324a;background:#0b1120;color:#fff;margin-top:6px;box-sizing:border-box;}
+  .admin-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+  .btn{background:var(--accent);color:#00101a;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+  .btn.ghost{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+  .small{font-size:0.85rem;padding:6px 10px;border-radius:6px}
+  .delete-btn{position:absolute;top:10px;right:10px;background:rgba(255,0,0,0.12);color:#ff8b8b;padding:6px 8px;border-radius:8px;border:none;cursor:pointer;display:none}
+  .edit-btn{position:absolute;top:10px;left:10px;background:rgba(0,210,255,0.12);color:#9ff0ff;padding:6px 8px;border-radius:8px;border:none;cursor:pointer;display:none}
+  .card.admin .delete-btn{display:block}
+  .card.admin .edit-btn{display:block}
+  .admin-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .muted{color:#9fb3e6;font-size:0.9rem}
+  .thumbs{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .thumbs img{height:50px;border-radius:6px;object-fit:cover;border:1px solid rgba(255,255,255,0.06);cursor:pointer}
+  .thumbs img.selected-thumb{outline:3px solid var(--accent); transform:scale(1.02);}
+  .thumb-label{font-size:0.8rem;color:#9fb3e6;margin-top:6px}
+  .status{font-size:0.9rem;color:#9fb3e6;margin-top:6px}
+  .hidden{display:none!important}
+  @media (max-width:700px){header, .projects{padding:20px}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="title">Projects</h1>
+  <div>
+    <button id="adminToggle" class="admin-btn">Admin</button>
+  </div>
+</header>
+
+<section class="projects">
+  <div id="adminPanel" class="admin-panel" aria-hidden="true">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <strong style="color:#dff7ff">Admin - Add / Manage Projects</strong>
+      <div class="admin-controls">
+        <button id="migrateBtn" class="btn small ghost">Re-run migration</button>
+        <button id="hideAddBtn" class="btn small ghost">Disable Add UI</button>
+        <button id="removeAddBtn" class="btn small ghost" title="Removes admin controls from the page (persistent in localStorage)">Remove Add UI</button>
+        <button id="downloadBtn" class="btn small">Download HTML</button>
+      </div>
+    </div>
+
+    <div style="margin-top:8px;color:#bcdfff;font-size:0.95rem">
+      Old projects are automatically migrated and SolidWorks duplicates are automatically deduplicated (CFD left unchanged). Use "Re-run migration" if you want to retry.
+    </div>
+
+    <div class="status" id="migrateStatus" aria-live="polite"></div>
+
+    <label>Category</label>
+    <select id="projCategory">
+      <option value="solidworks">SolidWorks</option>
+      <option value="autocad">AutoCAD</option>
+      <option value="cfd">CFD</option>
+      <option value="other">Other</option>
+    </select>
+
+    <label>Title</label>
+    <input id="projTitle" type="text" placeholder="Project title">
+
+    <label>Description (detailed allowed, newlines preserved)</label>
+    <textarea id="projDesc" rows="4" placeholder="Detailed description, newlines will be preserved"></textarea>
+
+    <label>Tools (comma-separated)</label>
+    <input id="projTools" type="text" placeholder="e.g. SolidWorks, CAD">
+
+    <label>Image URLs (comma-separated) — optional if you used Choose images</label>
+    <input id="projImages" type="text" placeholder="assets/solidworks/1.jpg, https://.../1b.jpg">
+
+    <label>Choose images from your PC (optional) <small style="color:#9fb3e6">(multiple)</small></label>
+    <input id="projFiles" type="file" accept="image/*" multiple>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="thumb-label">Click a thumbnail to set it as the project thumbnail</div>
+
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button id="addProjBtn" class="btn">Add Project</button>
+      <button id="cancelEditBtn" class="btn small ghost hidden">Cancel Edit</button>
+      <button id="clearSelectedBtn" class="btn small ghost">Clear Selected Images</button>
+      <button id="clearCustomBtn" class="btn small ghost">Clear All Custom Projects</button>
+      <button id="wipeAllBtn" class="btn small ghost" title="Wipes custom projects storage">Wipe All Projects</button>
+      <span class="muted">Admin session lasts while tab is open. To hide add UI for everyone use 'Disable Add UI' or 'Remove Add UI'.</span>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <a href="index.html" class="back">← Back to Home</a>
+</section>
+
+<div id="modal">
+  <span class="close-modal" onclick="closeModal()">✕</span>
+  <img id="modal-img" alt="">
+  <div class="details">
+    <h2 id="modal-title"></h2>
+    <p id="modal-desc"></p>
+    <p><strong>Tools:</strong> <span id="modal-tools"></span></p>
+  </div>
+  <div class="modal-nav">
+    <span class="modal-btn" onclick="prevImage()">❮ Prev</span>
+    <span class="modal-btn" onclick="nextImage()">Next ❯</span>
+  </div>
+</div>
+
+<script>
+/*
+  This file:
+  - Automatically migrates old localStorage projects into IndexedDB (if present).
+  - Automatically deduplicates SolidWorks projects using a robust signature:
+      normalized title/desc/tools + image hash of the first image (SHA-1) when available.
+    CFD projects are left untouched/untouched by the dedupe.
+  - Keeps a backup of original localStorage at 'custom_projects_v1_backup'.
+  - Provides admin controls (re-run migration, add/edit/delete, wipe).
+  Notes:
+  - Deduplication runs once and sets a localStorage flag to avoid repeating.
+  - If you want to re-run dedupe, click "Re-run migration" in Admin (it will also re-run dedupe).
+  - Change ADMIN_PASSWORD before sharing the file.
+*/
+
+const ADMIN_PASSWORD = 'letmein'; // change before publishing
+
+// localStorage keys
+const LOCAL_OLD_KEY = 'custom_projects_v1';
+const LOCAL_BACKUP_KEY = 'custom_projects_v1_backup';
+const LOCAL_MIGRATED_FLAG = 'custom_projects_migrated_v1';
+const LOCAL_DEDUPE_SOLIDWORKS_FLAG = 'custom_projects_deduped_solidworks_v1';
+const ADMIN_AUTH_KEY = 'projects_admin_auth';
+const ADMIN_DISABLED_KEY = 'projects_admin_disabled';
+const ADMIN_REMOVED_KEY = 'projects_admin_removed';
+
+// DB constants
+const DB_NAME = 'projects-db';
+const DB_VERSION = 1;
+const STORE_IMAGES = 'images';
+const STORE_PROJECTS = 'projects';
+
+// UI nodes
+const migrateStatus = document.getElementById('migrateStatus');
+const migrateBtn = document.getElementById('migrateBtn');
+const adminToggle = document.getElementById('adminToggle');
+const adminPanel = document.getElementById('adminPanel');
+const addProjBtn = document.getElementById('addProjBtn');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+const projCategory = document.getElementById('projCategory');
+const projTitle = document.getElementById('projTitle');
+const projDesc = document.getElementById('projDesc');
+const projTools = document.getElementById('projTools');
+const projImages = document.getElementById('projImages');
+const projFiles = document.getElementById('projFiles');
+const thumbs = document.getElementById('thumbs');
+const clearSelectedBtn = document.getElementById('clearSelectedBtn');
+const clearCustomBtn = document.getElementById('clearCustomBtn');
+const wipeAllBtn = document.getElementById('wipeAllBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+
+const grid = document.getElementById('grid');
+const titleEl = document.getElementById('title');
+const modal = document.getElementById('modal');
+const modalImg = document.getElementById('modal-img');
+const modalTitle = document.getElementById('modal-title');
+const modalDesc = document.getElementById('modal-desc');
+const modalTools = document.getElementById('modal-tools');
+
+let selectedFilesData = [];
+let selectedThumbIndex = null;
+let isEditing = false;
+let editingMeta = null;
+let dbPromise = null;
+const blobUrlCache = new Map();
+
+// ---------- IndexedDB helpers ----------
+function openDB(){
+  if(dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (ev) => {
+      const db = ev.target.result;
+      if(!db.objectStoreNames.contains(STORE_IMAGES)){
+        db.createObjectStore(STORE_IMAGES, { keyPath: 'id' });
+      }
+      if(!db.objectStoreNames.contains(STORE_PROJECTS)){
+        const store = db.createObjectStore(STORE_PROJECTS, { keyPath: 'id', autoIncrement: true });
+        store.createIndex('category', 'category', { unique: false });
+      }
+    };
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+  return dbPromise;
+}
+async function addImageBlob(blob){
+  const db = await openDB();
+  const id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,9);
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_IMAGES, 'readwrite');
+    tx.oncomplete = ()=> resolve(id);
+    tx.onerror = ()=> reject(tx.error);
+    const store = tx.objectStore(STORE_IMAGES);
+    store.put({ id, blob });
+  });
+}
+async function getImageBlob(id){
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_IMAGES, 'readonly');
+    const store = tx.objectStore(STORE_IMAGES);
+    const req = store.get(id);
+    req.onsuccess = ()=> resolve(req.result ? req.result.blob : null);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+async function deleteImage(id){
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_IMAGES, 'readwrite');
+    tx.oncomplete = ()=> resolve();
+    tx.onerror = ()=> reject(tx.error);
+    tx.objectStore(STORE_IMAGES).delete(id);
+  });
+}
+async function addProjectRecord(rec){
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_PROJECTS, 'readwrite');
+    tx.oncomplete = ()=> resolve();
+    tx.onerror = ()=> reject(tx.error);
+    tx.objectStore(STORE_PROJECTS).add(rec);
+  });
+}
+async function putProjectRecord(rec){
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_PROJECTS, 'readwrite');
+    tx.oncomplete = ()=> resolve();
+    tx.onerror = ()=> reject(tx.error);
+    tx.objectStore(STORE_PROJECTS).put(rec);
+  });
+}
+async function deleteProjectRecord(id){
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_PROJECTS, 'readwrite');
+    tx.oncomplete = ()=> resolve();
+    tx.onerror = ()=> reject(tx.error);
+    tx.objectStore(STORE_PROJECTS).delete(id);
+  });
+}
+async function getAllProjectRecords(){
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_PROJECTS, 'readonly');
+    const store = tx.objectStore(STORE_PROJECTS);
+    const req = store.getAll();
+    req.onsuccess = ()=> resolve(req.result || []);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+
+// ---------- Utilities ----------
+function dataURLToBlob(dataurl){
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while(n--){
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], {type:mime});
+}
+function createImageElementFromDataUrl(dataUrl){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=> resolve(img);
+    img.onerror = (e)=> reject(e);
+    img.src = dataUrl;
+  });
+}
+async function compressDataUrl(dataUrl, maxWidth = 1200, quality = 0.8){
+  const img = await createImageElementFromDataUrl(dataUrl);
+  const ratio = img.width / img.height || 1;
+  let newWidth = img.width;
+  if(img.width > maxWidth){ newWidth = maxWidth; }
+  const newHeight = Math.round(newWidth / ratio);
+  const canvas = document.createElement('canvas');
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+function blobToArrayBuffer(blob){
+  return new Promise((resolve,reject)=>{
+    const fr = new FileReader();
+    fr.onload = ()=> resolve(fr.result);
+    fr.onerror = ()=> reject(fr.error);
+    fr.readAsArrayBuffer(blob);
+  });
+}
+async function sha1Hex(arrayBuffer){
+  const hash = await crypto.subtle.digest('SHA-1', arrayBuffer);
+  const bytes = new Uint8Array(hash);
+  return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function escapeHtml(s){ return String(s || '').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+
+// ---------- Signatures & dedupe (SolidWorks only) ----------
+function normalizeText(s){ return (s||'').toString().trim().replace(/\s+/g,' ').toLowerCase(); }
+
+async function computeRecordFirstImageHash(rec){
+  const imgs = rec.images || [];
+  if(!imgs.length) return 'noimg';
+  const first = imgs[0];
+  if(first.kind === 'url') return 'url:' + (first.url||'').slice(0,200);
+  if(first.kind === 'blob' && first.id){
+    try{
+      const blob = await getImageBlob(first.id);
+      if(!blob) return 'blobmissing:' + first.id;
+      const ab = await blobToArrayBuffer(blob);
+      const h = await sha1Hex(ab);
+      return 'blobsha1:' + h;
+    }catch(e){
+      console.warn('hash error', first.id, e);
+      return 'bloberr:' + first.id;
+    }
+  }
+  return 'other';
+}
+
+function signatureFromRecord(rec, firstHash){
+  const title = normalizeText(rec.title);
+  const desc = normalizeText(rec.desc);
+  const tools = normalizeText(rec.tools);
+  const imgCount = (rec.images && rec.images.length) || 0;
+  return [title, desc, tools, imgCount, firstHash].join('|');
+}
+
+async function dedupeSolidWorksRecords(){
+  // run only once, controlled by flag
+  if(localStorage.getItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG) === 'true'){
+    migrateStatus.textContent = 'SolidWorks dedupe already performed.';
+    return { deduped: false, reason: 'already-deduped' };
+  }
+
+  migrateStatus.textContent = 'Running SolidWorks deduplication...';
+  const records = await getAllProjectRecords();
+  // filter to SolidWorks category (case-insensitive match)
+  const solid = records.filter(r => {
+    const cat = (r.category || '').toString().toLowerCase();
+    return cat === 'solidworks' || cat.includes('solidwork');
+  });
+
+  if(solid.length <= 1){
+    migrateStatus.textContent = 'SolidWorks dedupe: nothing to do (' + solid.length + ' record(s)).';
+    localStorage.setItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG, 'true'); // mark as done to avoid future runs
+    return { deduped: false, reason: 'none' };
+  }
+
+  // compute signatures with first-image hash
+  const sigMap = new Map(); // signature -> kept record
+  const toDelete = [];
+  for(const rec of solid){
+    const firstHash = await computeRecordFirstImageHash(rec);
+    const sig = signatureFromRecord(rec, firstHash);
+    if(!sigMap.has(sig)){
+      sigMap.set(sig, rec);
+    } else {
+      // If duplicates appear but IDs differ, prefer the existing kept one (first)
+      toDelete.push(rec);
+    }
+  }
+
+  // delete duplicates and their blob images
+  for(const rec of toDelete){
+    for(const im of rec.images || []){
+      if(im && im.kind === 'blob' && im.id){
+        try{ await deleteImage(im.id); }catch(e){ /* ignore */ }
+        if(blobUrlCache.has(im.id)){ URL.revokeObjectURL(blobUrlCache.get(im.id)); blobUrlCache.delete(im.id); }
+      }
+    }
+    try{ await deleteProjectRecord(rec.id); }catch(e){ console.warn('Failed to delete rec', rec.id, e); }
+  }
+
+  localStorage.setItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG, 'true');
+  migrateStatus.textContent = 'SolidWorks dedupe finished. Removed ' + toDelete.length + ' duplicate record(s).';
+  return { deduped: true, removed: toDelete.length };
+}
+
+// ---------- Migration (skip duplicates that already exist) ----------
+async function migrateLocalStorageToIndexedDB(options = { maxWidth: 1200, quality: 0.8 }){
+  migrateStatus.textContent = 'Checking for old localStorage data...';
+  const raw = localStorage.getItem(LOCAL_OLD_KEY);
+  if(!raw){
+    migrateStatus.textContent = '';
+    return { migrated: false, reason: 'no-old-data' };
+  }
+  if(localStorage.getItem(LOCAL_MIGRATED_FLAG) === 'true'){
+    migrateStatus.textContent = 'Already migrated previously.';
+    return { migrated: false, reason: 'already-migrated' };
+  }
+
+  let parsed;
+  try{ parsed = JSON.parse(raw); }catch(e){ migrateStatus.textContent = 'Failed to parse old data.'; return { migrated:false, reason:'parse-failed' }; }
+
+  migrateStatus.textContent = 'Starting migration (skipping existing duplicates)...';
+
+  // build existing signatures
+  const existingRecords = await getAllProjectRecords();
+  const existingSignatures = new Set();
+  for(const r of existingRecords){
+    const firstHash = await computeRecordFirstImageHash(r);
+    existingSignatures.add(signatureFromRecord(r, firstHash));
+  }
+
+  // migrate categories/projects from old structure, skipping duplicates
+  const categories = Object.keys(parsed);
+  for(const cat of categories){
+    const projects = parsed[cat] || [];
+    for(const proj of projects){
+      // compute a tentative signature from old object (we approximate first-image hash as 'dataurl:first' or url)
+      const title = normalizeText(proj.title);
+      const desc  = normalizeText(proj.desc);
+      const tools = normalizeText(proj.tools);
+      const imgs = proj.images || [];
+      const imgCount = imgs.length || 0;
+      let firstId = 'noimg';
+      if(imgs.length){
+        const f = imgs[0];
+        if(typeof f === 'string' && f.startsWith('data:')) firstId = 'dataurl:first';
+        else if(typeof f === 'string') firstId = 'url:' + f.slice(0,200);
+      }
+      const sigOld = [title, desc, tools, imgCount, firstId].join('|');
+      // If any existing signature matches this approximate signature, skip (avoid duplicates)
+      // Note: for blobs we won't have exact hash here, but this avoids obvious duplicates
+      let skip = false;
+      for(const exist of existingSignatures){
+        if(exist.startsWith(title + '|' + desc + '|' + tools + '|' + imgCount + '|')){ skip = true; break; }
+      }
+      if(skip) continue;
+
+      // convert images
+      const newImages = [];
+      for(const img of imgs){
+        if(typeof img === 'string' && img.startsWith('data:')){
+          try{
+            const compressedDataUrl = await compressDataUrl(img, options.maxWidth, options.quality);
+            const blob = dataURLToBlob(compressedDataUrl);
+            const id = await addImageBlob(blob);
+            newImages.push({ kind: 'blob', id });
+          }catch(err){
+            console.error('image migration failed', err);
+            newImages.push({ kind: 'url', url: img });
+          }
+        } else if(typeof img === 'string'){
+          newImages.push({ kind: 'url', url: img });
+        }
+      }
+
+      const record = {
+        category: cat,
+        title: proj.title || '',
+        desc: proj.desc || '',
+        tools: proj.tools || '',
+        images: newImages,
+        thumbnailIndex: (typeof proj.thumbnailIndex === 'number') ? proj.thumbnailIndex : 0
+      };
+
+      await addProjectRecord(record);
+      const recFirstHash = await computeRecordFirstImageHash(record);
+      existingSignatures.add(signatureFromRecord(record, recFirstHash));
+    }
+  }
+
+  try{
+    localStorage.setItem(LOCAL_BACKUP_KEY, raw);
+    localStorage.removeItem(LOCAL_OLD_KEY);
+    localStorage.setItem(LOCAL_MIGRATED_FLAG, 'true');
+    migrateStatus.textContent = 'Migration complete. Backup saved to ' + LOCAL_BACKUP_KEY;
+    return { migrated: true };
+  }catch(e){
+    migrateStatus.textContent = 'Migration completed but backup failed: ' + (e.message || e);
+    return { migrated: true, warning: 'backup-failed' };
+  }
+}
+
+// ---------- Render projects (from IndexedDB) ----------
+async function getAllProjectsStructured(){
+  const records = await getAllProjectRecords();
+  const byCat = {};
+  for(const rec of records){
+    const imagesSrcs = [];
+    for(const im of rec.images || []){
+      if(im.kind === 'blob' && im.id){
+        if(blobUrlCache.has(im.id)) imagesSrcs.push(blobUrlCache.get(im.id));
+        else {
+          const blob = await getImageBlob(im.id);
+          if(blob){
+            const url = URL.createObjectURL(blob);
+            blobUrlCache.set(im.id, url);
+            imagesSrcs.push(url);
+          } else imagesSrcs.push('');
+        }
+      } else if(im.kind === 'url'){
+        imagesSrcs.push(im.url);
+      } else imagesSrcs.push('');
+    }
+    const proj = { id: rec.id, title: rec.title, desc: rec.desc, tools: rec.tools, images: imagesSrcs, thumbnailIndex: rec.thumbnailIndex, category: rec.category };
+    if(!byCat[rec.category]) byCat[rec.category] = [];
+    byCat[rec.category].push(proj);
+  }
+  return byCat;
+}
+
+async function render(){
+  grid.innerHTML = '';
+  const data = await getAllProjectsStructured();
+  const categories = Object.keys(data);
+  const q = new URLSearchParams(location.search).get('type');
+  if(q){
+    if(!data[q]){
+      titleEl.innerText = 'Projects';
+      grid.innerHTML = `<div style="color:#9fb3e6">No projects found for '${q}'.</div>`;
+      return;
+    }
+    titleEl.innerText = q.toUpperCase() + ' PROJECTS';
+    data[q].forEach((proj)=> grid.appendChild(createCard(proj, q)));
+    return;
+  }
+
+  titleEl.innerText = 'Projects';
+  if(categories.length === 0){
+    grid.innerHTML = `<div style="color:#9fb3e6">No projects available. Use Admin → Add Project to create new projects.</div>`;
+    return;
+  }
+  for(const category of categories){
+    const heading = document.createElement('h2');
+    heading.style.marginTop = '18px';
+    heading.style.marginBottom = '8px';
+    heading.style.color = '#bfe8ff';
+    heading.style.fontSize = '1.1rem';
+    heading.textContent = category.toUpperCase();
+    grid.appendChild(heading);
+    const container = document.createElement('div');
+    container.classList.add('grid');
+    data[category].forEach((proj)=> container.appendChild(createCard(proj, category)));
+    grid.appendChild(container);
+  }
+}
+
+function createCard(proj, category){
+  const div = document.createElement('div');
+  div.classList.add('card');
+  if(isAdminAuthenticated()) div.classList.add('admin');
+
+  const thumbIndex = (typeof proj.thumbnailIndex === 'number') ? proj.thumbnailIndex : 0;
+  const imgSrc = (proj.images && proj.images.length && proj.images[thumbIndex]) ? proj.images[thumbIndex] : (proj.images && proj.images.length ? proj.images[0] : '');
+  const img = document.createElement('img');
+  img.src = imgSrc;
+  img.alt = proj.title || 'project image';
+
+  const info = document.createElement('div');
+  info.className = 'info';
+  info.innerHTML = `<h3>${escapeHtml(proj.title || '')}</h3><p>${escapeHtml(proj.desc || '')}</p>`;
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'edit-btn';
+  editBtn.textContent = 'Edit';
+  editBtn.onclick = (e) => { e.stopPropagation(); if(!isAdminAuthenticated()) return alert('Admin required'); startEditFromRecord(category, proj.id); };
+
+  const del = document.createElement('button');
+  del.className = 'delete-btn';
+  del.textContent = 'Delete';
+  del.onclick = async (e) => {
+    e.stopPropagation();
+    if(!isAdminAuthenticated()) return alert('Admin required');
+    if(!confirm('Delete this project?')) return;
+    const db = await openDB();
+    const rec = await new Promise((res,rej)=>{ const tx=db.transaction(STORE_PROJECTS,'readonly'); const req=tx.objectStore(STORE_PROJECTS).get(proj.id); req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); });
+    if(rec){
+      for(const im of rec.images || []) if(im.kind==='blob' && im.id) try{ await deleteImage(im.id); }catch(e){}
+      await deleteProjectRecord(proj.id);
+      render();
+    } else alert('Project not found.');
+  };
+
+  div.appendChild(img);
+  div.appendChild(info);
+  div.appendChild(editBtn);
+  div.appendChild(del);
+  div.onclick = ()=> openModalFromCard(proj);
+  return div;
+}
+
+// modal helpers
+let currentImages = [], currentIndex = 0;
+function openModalFromCard(proj){
+  const imgs = proj.images || [];
+  currentImages = imgs.slice();
+  currentIndex = (typeof proj.thumbnailIndex === 'number') ? proj.thumbnailIndex || 0 : 0;
+  modal.style.display = 'flex';
+  modalImg.src = currentImages.length ? currentImages[currentIndex] : '';
+  modalTitle.innerText = proj.title || '';
+  modalDesc.innerText = proj.desc || '';
+  modalTools.innerText = proj.tools || '';
+}
+function closeModal(){ modal.style.display='none'; }
+function nextImage(){ if(!currentImages.length) return; currentIndex=(currentIndex+1)%currentImages.length; modalImg.src=currentImages[currentIndex]; }
+function prevImage(){ if(!currentImages.length) return; currentIndex=(currentIndex-1+currentImages.length)%currentImages.length; modalImg.src=currentImages[currentIndex]; }
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+
+// ---------- Admin auth & UI ----------
+function isAdminAuthenticated(){ return sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true' && !isAdminRemoved(); }
+function isAdminDisabled(){ return localStorage.getItem(ADMIN_DISABLED_KEY) === 'true'; }
+function isAdminRemoved(){ return localStorage.getItem(ADMIN_REMOVED_KEY) === 'true'; }
+
+adminToggle.addEventListener('click', ()=> {
+  if(isAdminRemoved()){ alert('Admin controls removed. To re-enable edit the file or clear the flag in localStorage.'); return; }
+  if(isAdminAuthenticated()){
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
+    adminPanel.classList.remove('show');
+    adminPanel.setAttribute('aria-hidden','true');
+    adminToggle.textContent = 'Admin';
+    render();
+    return;
+  }
+  const p = prompt('Enter admin password to enable add/manage projects:');
+  if(p === ADMIN_PASSWORD){
+    sessionStorage.setItem(ADMIN_AUTH_KEY,'true');
+    if(!isAdminDisabled()){
+      adminPanel.classList.add('show');
+      adminPanel.setAttribute('aria-hidden','false');
+    } else {
+      alert('Add UI has been disabled for this page (Disable Add UI flag set). Clear localStorage key "projects_admin_disabled" to re-enable.');
+    }
+    adminToggle.textContent = 'Admin (ON)';
+    render();
+  } else alert('Incorrect password.');
+});
+
+// ---------- File input + thumbnails ----------
+projFiles.addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files || []);
+  if(!files.length) return;
+  selectedFilesData = []; selectedThumbIndex = null; thumbs.innerHTML = '';
+  for(const f of files){
+    if(!f.type.startsWith('image/')) continue;
+    try{ const compressed = await readAndCompressImage(f, 1200, 0.8); selectedFilesData.push({ src: compressed, name: f.name }); }
+    catch(err){ console.error('compress failed', err); const fr = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(f); }); selectedFilesData.push({ src: fr, name: f.name }); }
+  }
+  renderThumbs();
+});
+projImages.addEventListener('input', renderThumbs);
+clearSelectedBtn.addEventListener('click', ()=>{ selectedFilesData=[]; selectedThumbIndex=null; projFiles.value=''; thumbs.innerHTML=''; });
+
+function renderThumbs(){
+  thumbs.innerHTML = '';
+  const manualUrls = projImages.value.trim() ? projImages.value.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  const combined = [];
+  selectedFilesData.forEach(f => combined.push({ src: f.src, origin: 'file' }));
+  manualUrls.forEach(u => combined.push({ src: u, origin: 'url' }));
+  combined.forEach((item,i)=>{
+    const im = document.createElement('img');
+    im.src = item.src;
+    im.alt = item.origin === 'file' ? (selectedFilesData[i] && selectedFilesData[i].name) || 'image' : item.src;
+    if(i === selectedThumbIndex) im.classList.add('selected-thumb');
+    im.addEventListener('click', ()=>{ selectedThumbIndex = i; Array.from(thumbs.querySelectorAll('img')).forEach((el,idx)=>el.classList.toggle('selected-thumb', idx===i)); });
+    thumbs.appendChild(im);
+  });
+  if(combined.length && selectedThumbIndex===null){ selectedThumbIndex=0; const first=thumbs.querySelector('img'); if(first) first.classList.add('selected-thumb'); }
+}
+
+async function readAndCompressImage(file, maxWidth=1200, quality=0.8){
+  const dataUrl = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(file); });
+  const img = await createImageElementFromDataUrl(dataUrl);
+  const ratio = img.width/img.height || 1;
+  let newWidth = img.width; if(img.width > maxWidth) newWidth = maxWidth;
+  const newHeight = Math.round(newWidth/ratio);
+  const canvas = document.createElement('canvas'); canvas.width=newWidth; canvas.height=newHeight;
+  const ctx = canvas.getContext('2d'); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
+// ---------- Add/Edit flow ----------
+addProjBtn.addEventListener('click', async ()=> {
+  if(!isAdminAuthenticated()) return alert('Admin required');
+  const category = projCategory.value || 'other';
+  const title = projTitle.value.trim();
+  const desc = projDesc.value.trim();
+  const tools = projTools.value.trim();
+  const imagesRaw = projImages.value.trim();
+  if(!title) return alert('Title is required.');
+  const manualUrls = imagesRaw ? imagesRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  const imagesList = [];
+  for(const f of selectedFilesData){
+    try{ const blob = dataURLToBlob(f.src); const id = await addImageBlob(blob); imagesList.push({ kind:'blob', id }); }catch(e){ imagesList.push({ kind:'url', url: f.src }); }
+  }
+  for(const u of manualUrls) imagesList.push({ kind:'url', url: u });
+  let thumbnailIndex = 0;
+  if(typeof selectedThumbIndex === 'number' && selectedThumbIndex !== null && selectedThumbIndex < imagesList.length) thumbnailIndex = selectedThumbIndex;
+  else thumbnailIndex = imagesList.length ? 0 : undefined;
+  try{
+    if(isEditing && editingMeta){
+      const db = await openDB();
+      const rec = await new Promise((res,rej)=>{ const tx=db.transaction(STORE_PROJECTS,'readonly'); const req=tx.objectStore(STORE_PROJECTS).get(editingMeta.id); req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); });
+      if(rec){
+        for(const im of rec.images||[]) if(im.kind==='blob' && im.id) try{ await deleteImage(im.id); }catch(e){}
+        rec.title=title; rec.desc=desc; rec.tools=tools; rec.images=imagesList; rec.thumbnailIndex=thumbnailIndex;
+        await putProjectRecord(rec);
+        alert('Project updated.'); stopEditing(); render(); return;
+      } else { alert('Original not found'); stopEditing(); }
+    }
+    const rec = { category, title, desc, tools, images: imagesList, thumbnailIndex };
+    await addProjectRecord(rec);
+    projTitle.value = projDesc.value = projTools.value = projImages.value = '';
+    selectedFilesData = []; selectedThumbIndex = null; projFiles.value = ''; thumbs.innerHTML = '';
+    alert('Project added.'); render();
+  }catch(e){
+    console.error(e); alert('Save failed: '+ (e.message || e));
+  }
+});
+
+async function startEditFromRecord(category, projectId){
+  if(!isAdminAuthenticated()) return alert('Admin required');
+  const db = await openDB();
+  const rec = await new Promise((res,rej)=>{ const tx=db.transaction(STORE_PROJECTS,'readonly'); const req=tx.objectStore(STORE_PROJECTS).get(projectId); req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error);});
+  if(!rec) return alert('Not found');
+  projCategory.value = rec.category; projTitle.value = rec.title||''; projDesc.value = rec.desc||''; projTools.value = rec.tools||'';
+  selectedFilesData = []; const manualUrls=[];
+  for(const im of rec.images||[]){
+    if(im.kind==='blob' && im.id){ const blob = await getImageBlob(im.id); if(blob){ const dataUrl = await blobToDataURL(blob); selectedFilesData.push({ src: dataUrl, name: im.id }); } }
+    else if(im.kind==='url') manualUrls.push(im.url);
+  }
+  projImages.value = manualUrls.join(', ');
+  selectedThumbIndex = (typeof rec.thumbnailIndex === 'number') ? rec.thumbnailIndex : (selectedFilesData.length ? 0 : null);
+  renderThumbs();
+  isEditing = true; editingMeta = { id: rec.id, category: rec.category };
+  addProjBtn.textContent = 'Save Changes'; cancelEditBtn.classList.remove('hidden');
+  if(!adminPanel.classList.contains('show')) { adminPanel.classList.add('show'); adminPanel.setAttribute('aria-hidden','false'); }
+}
+cancelEditBtn.addEventListener('click', ()=>{ if(!isEditing) return; if(!confirm('Cancel edit? Unsaved changes will be lost.')) return; stopEditing(); });
+function stopEditing(){ isEditing=false; editingMeta=null; addProjBtn.textContent='Add Project'; cancelEditBtn.classList.add('hidden'); projTitle.value=projDesc.value=projTools.value=projImages.value=''; selectedFilesData=[]; selectedThumbIndex=null; projFiles.value=''; thumbs.innerHTML=''; }
+function blobToDataURL(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(blob); }); }
+
+// ---------- Clear / Wipe ----------
+clearCustomBtn.addEventListener('click', async ()=> {
+  if(!isAdminAuthenticated()) return alert('Admin required');
+  if(!confirm('Clear all custom projects (IndexedDB)? This cannot be undone.')) return;
+  const db = await openDB();
+  await new Promise((res,rej)=>{ const tx = db.transaction([STORE_PROJECTS, STORE_IMAGES],'readwrite'); tx.objectStore(STORE_PROJECTS).clear(); tx.objectStore(STORE_IMAGES).clear(); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); });
+  for(const url of blobUrlCache.values()) URL.revokeObjectURL(url); blobUrlCache.clear();
+  alert('Cleared.'); render();
+});
+wipeAllBtn.addEventListener('click', async ()=> {
+  if(!isAdminAuthenticated()) return alert('Admin required');
+  if(!confirm('Wipe ALL projects and admin flags?')) return;
+  try{
+    indexedDB.deleteDatabase(DB_NAME);
+    localStorage.removeItem(LOCAL_OLD_KEY); localStorage.removeItem(LOCAL_BACKUP_KEY); localStorage.removeItem(LOCAL_MIGRATED_FLAG);
+    localStorage.removeItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG); localStorage.removeItem(ADMIN_DISABLED_KEY); localStorage.removeItem(ADMIN_REMOVED_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
+    for(const url of blobUrlCache.values()) URL.revokeObjectURL(url); blobUrlCache.clear();
+    alert('Wiped. Reloading.'); location.reload();
+  }catch(e){ console.error(e); alert('Wipe failed'); }
+});
+
+// ---------- Re-run migration button ----------
+migrateBtn.addEventListener('click', async ()=>{
+  if(!isAdminAuthenticated()) return alert('Admin required');
+  migrateBtn.disabled = true;
+  migrateStatus.textContent = 'Re-running migration & dedupe...';
+  try{
+    await migrateLocalStorageToIndexedDB({ maxWidth: 1200, quality: 0.8 });
+    await dedupeSolidWorksRecords(); // extra safety
+    migrateStatus.textContent = 'Re-run done.';
+    await render();
+  }catch(e){ console.error(e); migrateStatus.textContent = 'Re-run failed: ' + (e.message || e); }
+  migrateBtn.disabled = false;
+});
+
+// ---------- Init: auto-migrate, dedupe (SolidWorks only), render ----------
+(async function init(){
+  try{
+    const hasOld = localStorage.getItem(LOCAL_OLD_KEY);
+    const migratedFlag = localStorage.getItem(LOCAL_MIGRATED_FLAG);
+    if(hasOld && migratedFlag !== 'true'){
+      migrateStatus.textContent = 'Old localStorage data found. Automatic migration starting...';
+      try{
+        await migrateLocalStorageToIndexedDB({ maxWidth: 1200, quality: 0.8 });
+        migrateStatus.textContent = 'Automatic migration completed.';
+      }catch(e){
+        console.error('auto migration error', e);
+        migrateStatus.textContent = 'Automatic migration failed: ' + (e.message||e);
+      }
+    }
+    // Run SolidWorks dedupe automatically once (CFD untouched)
+    if(localStorage.getItem(LOCAL_DEDUPE_SOLIDWORKS_FLAG) !== 'true'){
+      migrateStatus.textContent = 'Performing SolidWorks deduplication (automatic)...';
+      try{
+        await dedupeSolidWorksRecords();
+      }catch(e){
+        console.error('auto dedupe error', e);
+        migrateStatus.textContent = 'SolidWorks dedupe failed: ' + (e.message||e);
+      }
+    } else {
+      // no visible status needed
+      if(!migrateStatus.textContent) migrateStatus.textContent = '';
+    }
+  }catch(e){
+    console.error(e);
+  }
+  await render();
+})();
+
+// expose debug helpers for console
+window.__projectsDebug = { openDB, getAllProjectRecords, migrateLocalStorageToIndexedDB, dedupeSolidWorksRecords };
+
+</script>
+
+</body>
+</html>
